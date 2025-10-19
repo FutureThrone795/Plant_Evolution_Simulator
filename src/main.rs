@@ -8,6 +8,7 @@ use std::time::Instant;
 use std::fs;
 
 extern crate rand;
+extern crate noise;
 
 mod vertex_def;
 use crate::vertex_def::Vertex;
@@ -22,6 +23,8 @@ use camera::CameraState;
 
 mod vector_math;
 
+mod generate_terrain_mesh;
+
 fn main() {
     let event_loop = glium::winit::event_loop::EventLoop::builder()
         .build()
@@ -30,7 +33,8 @@ fn main() {
         .with_title("Plant Evolution Simulator")
         .build(&event_loop);
 
-    window.set_fullscreen(Some(glium::winit::window::Fullscreen::Borderless(None)));
+    //window.set_fullscreen(Some(glium::winit::window::Fullscreen::Borderless(None)));
+    window.set_maximized(true);
     window.set_cursor_grab(glium::winit::window::CursorGrabMode::Confined).ok();
     window.set_cursor_visible(false);
 
@@ -56,6 +60,7 @@ fn main() {
             write: true,
             .. Default::default()
         },
+        blend: glium::Blend::alpha_blending(),
         .. Default::default()
     };
 
@@ -75,7 +80,7 @@ fn main() {
                     let mut target = display.draw();
                     target.clear_color_and_depth((0.60, 0.75, 0.95, 1.0), 1.0);
 
-                    world.world_loop();
+                    world.world_loop(delta_time, total_time);
                     world.world_render(&mut target, &program, &display, &camera, &params);
 
                     target.finish().unwrap();

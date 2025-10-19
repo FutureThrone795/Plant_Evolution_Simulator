@@ -3,9 +3,13 @@
 
 use glium::winit::{keyboard::{KeyCode, PhysicalKey}};
 
+use crate::terrain::{TERRAIN_GRID_ROWS, TERRAIN_CELL_WIDTH, WORLD_WIDTH};
+
 use crate::vector_math::*;
 
 const WORLD_UP: (f32, f32, f32) = (0.0, 1.0, 0.0);
+
+const MOVEMENT_SPEED: f32 = 100.0;
 
 pub struct CameraState {
     aspect_ratio: f32,
@@ -24,7 +28,7 @@ impl CameraState {
     pub fn new() -> CameraState {
         CameraState {
             aspect_ratio: 1024.0 / 768.0,
-            position: (0.0, 0.0, 0.0),
+            position: (TERRAIN_CELL_WIDTH * (TERRAIN_GRID_ROWS as f32 / 2.0 - 0.5), 50.0, TERRAIN_CELL_WIDTH * (TERRAIN_GRID_ROWS as f32 / 2.0 - 0.5)),
             direction: (0.0, 0.0, 1.0),
             moving_up: false,
             moving_left: false,
@@ -97,32 +101,35 @@ impl CameraState {
         let camera_forward_flat = normalize((self.direction.0, 0.0, self.direction.2));
 
         if self.moving_up {
-            self.position.1 += delta_time * 10.0;
+            self.position.1 += delta_time * MOVEMENT_SPEED;
         }
 
         if self.moving_left {
-            self.position.0 += right.0 * delta_time * 10.0;
-            self.position.2 += right.2 * delta_time * 10.0;
+            self.position.0 += right.0 * delta_time * MOVEMENT_SPEED;
+            self.position.2 += right.2 * delta_time * MOVEMENT_SPEED;
         }
 
         if self.moving_down {
-            self.position.1 -= delta_time * 10.0;
+            self.position.1 -= delta_time * MOVEMENT_SPEED;
         }
 
         if self.moving_right {
-            self.position.0 -= right.0 * delta_time * 10.0;
-            self.position.2 -= right.2 * delta_time * 10.0;
+            self.position.0 -= right.0 * delta_time * MOVEMENT_SPEED;
+            self.position.2 -= right.2 * delta_time * MOVEMENT_SPEED;
         }
 
         if self.moving_forward {
-            self.position.0 += camera_forward_flat.0 * delta_time * 10.0;
-            self.position.2 += camera_forward_flat.2 * delta_time * 10.0;
+            self.position.0 += camera_forward_flat.0 * delta_time * MOVEMENT_SPEED;
+            self.position.2 += camera_forward_flat.2 * delta_time * MOVEMENT_SPEED;
         }
 
         if self.moving_backward {
-            self.position.0 -= camera_forward_flat.0 * delta_time * 10.0;
-            self.position.2 -= camera_forward_flat.2 * delta_time * 10.0;
+            self.position.0 -= camera_forward_flat.0 * delta_time * MOVEMENT_SPEED;
+            self.position.2 -= camera_forward_flat.2 * delta_time * MOVEMENT_SPEED;
         }
+
+        self.position.0 = self.position.0.rem_euclid(WORLD_WIDTH);
+        self.position.2 = self.position.2.rem_euclid(WORLD_WIDTH);
     }
 
     pub fn process_input(&mut self, event: &glium::winit::event::KeyEvent) {

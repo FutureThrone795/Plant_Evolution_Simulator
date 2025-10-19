@@ -11,8 +11,8 @@ impl World {
         return World {terrain: Terrain::random()};
     }
 
-    pub fn world_loop(&mut self) {
-
+    pub fn world_loop(&mut self, delta_time: f64, total_time: f64) {
+        self.terrain.water_height += ((total_time * 0.1).sin() as f32) * 0.003;
     }
 
     pub fn world_render(
