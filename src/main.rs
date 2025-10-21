@@ -61,6 +61,7 @@ fn main() {
             .. Default::default()
         },
         blend: glium::Blend::alpha_blending(),
+        backface_culling: glium::BackfaceCullingMode::CullCounterClockwise,
         .. Default::default()
     };
 

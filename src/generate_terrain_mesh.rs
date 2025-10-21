@@ -25,7 +25,7 @@ pub fn generate_terrain_mesh(terrain: &Terrain) -> (Vec<Vertex>, Vec<u32>, Vec<V
             water_vertices.push(Vertex {
                 position: [
                             x as f32 * TERRAIN_CELL_WIDTH, 
-                            terrain.water_height, 
+                            0.0, 
                             z as f32 * TERRAIN_CELL_WIDTH
                             ],
                 color: [0.0, 0.5, 1.0, 0.5]
@@ -36,7 +36,26 @@ pub fn generate_terrain_mesh(terrain: &Terrain) -> (Vec<Vertex>, Vec<u32>, Vec<V
                 let top_right       = (x *          (TERRAIN_GRID_ROWS + 1) +   (z + 1) ) as u32;
                 let bottom_left     = ((x + 1) *    (TERRAIN_GRID_ROWS + 1) +   z       ) as u32;
                 let bottom_right    = ((x + 1) *    (TERRAIN_GRID_ROWS + 1) +   (z + 1) ) as u32;
+                
+                if (x ^ z << 3).rem_euclid(3) & 1 == 0 {
+                    indices.push(top_left);
+                    indices.push(bottom_left);
+                    indices.push(top_right);
 
+                    water_indices.push(top_left);
+                    water_indices.push(bottom_left);
+                    water_indices.push(top_right);
+
+                    // second triangle
+                    indices.push(bottom_left);
+                    indices.push(bottom_right);
+                    indices.push(top_right);
+
+                    water_indices.push(bottom_left);
+                    water_indices.push(bottom_right);
+                    water_indices.push(top_right);
+                    continue;
+                }
                 // first triangle
                 indices.push(top_left);
                 indices.push(bottom_left);

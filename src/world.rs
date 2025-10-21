@@ -12,7 +12,7 @@ impl World {
     }
 
     pub fn world_loop(&mut self, delta_time: f64, total_time: f64) {
-        self.terrain.water_height += ((total_time * 0.1).sin() as f32) * 0.003;
+        self.terrain.water_height = (total_time * 0.1).sin() as f32 * 5.0 + (total_time * 0.0271).sin() as f32 * 5.0;
     }
 
     pub fn world_render(

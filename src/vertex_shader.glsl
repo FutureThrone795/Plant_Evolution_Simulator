@@ -8,14 +8,15 @@ uniform mat4 perspective;
 uniform mat4 view;
 uniform vec3 offset;
 
-const float FOG_MIN = 1100.0;
-const float FOG_MAX = 1200.0;
+const float FOG_MIN = 700.0;
+const float FOG_MAX = 1024.0;
 
 void main() {
-    gl_Position = perspective * view * vec4(position + offset, 1.0);
-    float dist = length(gl_Position);
+    vec4 worldspace = view * vec4(position + offset, 1.0);
+    float dist = length(worldspace);
+    gl_Position = perspective * worldspace;
 
-    vec3 ground_color = vec3(color.r, color.g, color.b) * min((position.y * 0.008 + 0.6), 1.0);
+    vec3 ground_color = vec3(color.r, color.g, color.b) * min((position.y * 0.01 + 0.5), 1.1);
     vec3 fog_color = vec3(0.79, 0.88, 0.97);
 
     float fog_density = 0.0;
