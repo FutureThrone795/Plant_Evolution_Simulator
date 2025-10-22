@@ -1,27 +1,30 @@
 use glium::DrawParameters;
 
 use crate::camera::CameraState;
+use crate::plant_option_vec::PlantOptionVec;
 use crate::terrain::Terrain;
 use crate::plant::Plant;
 
 pub struct World {
     pub terrain: Terrain,
-    pub plants: Vec<Plant>
+    pub plants: PlantOptionVec
 }
 
 impl World {
     pub fn world_init() -> World {
         return World {
             terrain: Terrain::random(),
-            plants: vec![]
+            plants: PlantOptionVec::new()
         };
     }
 
-    pub fn world_loop(&mut self, delta_time: f64, total_time: f64) {
+    pub fn tick(&mut self, delta_time: f64, total_time: f64) {
         self.terrain.water_height = (total_time * 0.1).sin() as f32 * 5.0 + (total_time * 0.0271).sin() as f32 * 5.0;
+
+        self.plants.tick(&self.terrain);
     }
 
-    pub fn world_render(
+    pub fn render(
         &self, 
         target: &mut glium::Frame, 
         program: &glium::Program, 
@@ -29,9 +32,7 @@ impl World {
         camera: &CameraState,
         params: &DrawParameters
     ) {
-        for plant in &self.plants {
-            plant.render(target, program, display, camera, params);
-        }
+        self.plants.render(target, program, display, camera, params);
 
         self.terrain.render(target, program, display, camera, params);
     }

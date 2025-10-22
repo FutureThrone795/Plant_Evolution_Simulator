@@ -23,6 +23,7 @@ mod camera;
 use camera::CameraState;
 
 mod vector_math;
+mod plant_option_vec;
 
 mod generate_terrain_mesh;
 
@@ -36,7 +37,7 @@ fn main() {
         .with_title("Plant Evolution Simulator")
         .build(&event_loop);
 
-    window.set_maximized(true);
+    //window.set_maximized(true);
     window.set_cursor_grab(glium::winit::window::CursorGrabMode::Confined).ok();
     window.set_cursor_visible(false);
 
@@ -83,8 +84,8 @@ fn main() {
                     let mut target = display.draw();
                     target.clear_color_and_depth((0.60, 0.75, 0.95, 1.0), 1.0);
 
-                    world.world_loop(delta_time, total_time);
-                    world.world_render(&mut target, &program, &display, &camera, &params);
+                    world.tick(delta_time, total_time);
+                    world.render(&mut target, &program, &display, &camera, &params);
 
                     target.finish().unwrap();
                 },
@@ -98,9 +99,9 @@ fn main() {
                         },
                         glium::winit::keyboard::PhysicalKey::Code(glium::winit::keyboard::KeyCode::KeyK) => {
                             if event.state.is_pressed() {
-                                let new_plant = plant::Plant::new(camera.position.0 / TERRAIN_CELL_WIDTH, camera.position.2 / TERRAIN_CELL_WIDTH, &world.terrain);
-                                println!("New plant created at {:?} with camera position {:?}", new_plant.position, camera.position);
-                                world.plants.push(new_plant);
+                                let new_plant = plant::Plant::new(camera.position.0 / TERRAIN_CELL_WIDTH, camera.position.2 / TERRAIN_CELL_WIDTH, 1000.0, &world.terrain);
+                                println!("New plant created at {:?} with camera position {:?}", new_plant.root_position, camera.position);
+                                world.plants.add_plant(new_plant);
                             }
                         },
                         _ => {
