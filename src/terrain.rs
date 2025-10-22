@@ -1,6 +1,7 @@
 pub const TERRAIN_GRID_ROWS: usize = 100;
 pub const TERRAIN_CELL_WIDTH: f32 = 10.0;
 pub const WORLD_WIDTH: f32 = TERRAIN_GRID_ROWS as f32 * TERRAIN_CELL_WIDTH;
+pub const TERRAIN_RENDER_SPREAD: i32 = 1;
 
 use std::f32::consts::PI;
 
@@ -13,6 +14,11 @@ use noise::Perlin;
 use crate::noise::NoiseFn;
 
 use crate::generate_terrain_mesh::generate_terrain_mesh;
+
+#[inline]
+fn map_helper(val: f32, curr_min: f32, curr_max: f32, new_min: f32, new_max: f32) -> f32 {
+    return (val - curr_min) / (curr_max - curr_min) * (new_max - new_min) + new_min;
+}
 
 fn old_perlin_helper(seed: u32, x: f32, y: f32, multiplier: f32, min: f32, max: f32) -> f32 {
     return ((Perlin::new(seed).get([(x * multiplier) as f64, (y * multiplier) as f64]) as f32 + 1.0) / 2.0) * (max - min) + min;
@@ -36,7 +42,7 @@ fn perlin_helper(perlin: Perlin, seed: u32, x: f32, y: f32, multiplier: f32, min
     //To counteract the higher-dimensional smoothing artifacts
     let contrast_curve = sample.signum() * sample.abs().powf(0.7);
 
-    return ((contrast_curve + 1.0) / 2.0) * (max-min) + min;
+    return map_helper(contrast_curve, -1.0, 1.0, min, max);
 }
 
 #[derive(Clone, Copy)]
@@ -115,6 +121,29 @@ pub struct Terrain {
 }
 
 impl Terrain {
+    pub fn get_height(&self, x: f32, z: f32) -> f32 {
+        let x_mapped = (x as f32).rem_euclid(TERRAIN_GRID_ROWS as f32);
+        let z_mapped = (z as f32).rem_euclid(TERRAIN_GRID_ROWS as f32);
+
+        let neg_x_index = x_mapped.floor() as usize;
+        let pos_x_index = (neg_x_index + 1).rem_euclid(TERRAIN_GRID_ROWS);
+        let x_offset = x_mapped.rem_euclid(1.0);
+
+        let neg_z_index = z_mapped.floor() as usize;
+        let pos_z_index = (neg_z_index + 1).rem_euclid(TERRAIN_GRID_ROWS);
+        let z_offset = z_mapped.rem_euclid(1.0);
+
+        let pos_x_pos_z_height = self.grid[pos_x_index][pos_z_index].height;
+        let neg_x_pos_z_height = self.grid[neg_x_index][pos_z_index].height;
+        let pos_x_neg_z_height = self.grid[pos_x_index][neg_z_index].height;
+        let neg_x_neg_z_height = self.grid[neg_x_index][neg_z_index].height;
+        
+        return  pos_x_pos_z_height*(x_offset)*(z_offset) + 
+                neg_x_pos_z_height*(1.0-x_offset)*(z_offset) +
+                pos_x_neg_z_height*(x_offset)*(1.0-z_offset) +
+                neg_x_neg_z_height*(1.0-x_offset)*(1.0-z_offset);
+    }
+
     pub fn empty() -> Terrain {
         return Terrain {grid: Box::new([[TerrainGridNode {
             height: 0.0,
@@ -224,8 +253,8 @@ impl Terrain {
         let water_vertex_buffer = glium::VertexBuffer::new(display, &self.water_vertices).unwrap();
         let water_index_buffer = glium::IndexBuffer::new(display, glium::index::PrimitiveType::TrianglesList, &self.water_indices).unwrap();     
 
-        for x in -2..3 {
-            for z in -2..3 {
+        for x in (-TERRAIN_RENDER_SPREAD)..(TERRAIN_RENDER_SPREAD + 1) {
+            for z in (-TERRAIN_RENDER_SPREAD)..(TERRAIN_RENDER_SPREAD + 1) {
                 let uniforms = uniform! {
                     view: camera.get_view(),
                     perspective: camera.get_perspective(),
@@ -235,8 +264,8 @@ impl Terrain {
                 target.draw(&vertex_buffer, &index_buffer, program, &uniforms, params).unwrap();
             }
         }
-        for x in -2..3 {
-            for z in -2..3 {
+        for x in (-TERRAIN_RENDER_SPREAD)..(TERRAIN_RENDER_SPREAD + 1) {
+            for z in (-TERRAIN_RENDER_SPREAD)..(TERRAIN_RENDER_SPREAD + 1) {
                 let uniforms = uniform! {
                     view: camera.get_view(),
                     perspective: camera.get_perspective(),

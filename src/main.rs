@@ -14,6 +14,7 @@ mod vertex_def;
 use crate::vertex_def::Vertex;
 
 mod terrain;
+use crate::terrain::TERRAIN_CELL_WIDTH;
 
 mod world;
 use crate::world::World;
@@ -25,6 +26,8 @@ mod vector_math;
 
 mod generate_terrain_mesh;
 
+mod plant;
+
 fn main() {
     let event_loop = glium::winit::event_loop::EventLoop::builder()
         .build()
@@ -33,7 +36,6 @@ fn main() {
         .with_title("Plant Evolution Simulator")
         .build(&event_loop);
 
-    //window.set_fullscreen(Some(glium::winit::window::Fullscreen::Borderless(None)));
     window.set_maximized(true);
     window.set_cursor_grab(glium::winit::window::CursorGrabMode::Confined).ok();
     window.set_cursor_visible(false);
@@ -76,7 +78,7 @@ fn main() {
                     delta_time = instant_now.duration_since(prev_instant).as_secs_f64();
                     prev_instant = instant_now;
 
-                    camera.update(delta_time as f32);
+                    camera.update(delta_time as f32, &world);
 
                     let mut target = display.draw();
                     target.clear_color_and_depth((0.60, 0.75, 0.95, 1.0), 1.0);
@@ -93,7 +95,14 @@ fn main() {
                     match event.physical_key {
                         glium::winit::keyboard::PhysicalKey::Code(glium::winit::keyboard::KeyCode::Escape) => {
                             window_target.exit();
-                        }
+                        },
+                        glium::winit::keyboard::PhysicalKey::Code(glium::winit::keyboard::KeyCode::KeyK) => {
+                            if event.state.is_pressed() {
+                                let new_plant = plant::Plant::new(camera.position.0 / TERRAIN_CELL_WIDTH, camera.position.2 / TERRAIN_CELL_WIDTH, &world.terrain);
+                                println!("New plant created at {:?} with camera position {:?}", new_plant.position, camera.position);
+                                world.plants.push(new_plant);
+                            }
+                        },
                         _ => {
                             camera.process_input(&event);
                         }

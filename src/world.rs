@@ -1,14 +1,20 @@
 use glium::DrawParameters;
 
-use crate::{camera::CameraState, terrain::Terrain};
+use crate::camera::CameraState;
+use crate::terrain::Terrain;
+use crate::plant::Plant;
 
 pub struct World {
-    terrain: Terrain
+    pub terrain: Terrain,
+    pub plants: Vec<Plant>
 }
 
 impl World {
     pub fn world_init() -> World {
-        return World {terrain: Terrain::random()};
+        return World {
+            terrain: Terrain::random(),
+            plants: vec![]
+        };
     }
 
     pub fn world_loop(&mut self, delta_time: f64, total_time: f64) {
@@ -23,6 +29,10 @@ impl World {
         camera: &CameraState,
         params: &DrawParameters
     ) {
+        for plant in &self.plants {
+            plant.render(target, program, display, camera, params);
+        }
+
         self.terrain.render(target, program, display, camera, params);
     }
 }

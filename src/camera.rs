@@ -3,17 +3,20 @@
 
 use glium::winit::{keyboard::{KeyCode, PhysicalKey}};
 
-use crate::terrain::{TERRAIN_GRID_ROWS, TERRAIN_CELL_WIDTH, WORLD_WIDTH};
+use crate::{terrain::{TERRAIN_CELL_WIDTH, TERRAIN_GRID_ROWS, WORLD_WIDTH}, world::World};
 
 use crate::vector_math::*;
 
 const WORLD_UP: (f32, f32, f32) = (0.0, 1.0, 0.0);
 
-const MOVEMENT_SPEED: f32 = 100.0;
+const WALKING_MOVEMENT_SPEED: f32 = 40.0;
+const FLYING_MOVEMENT_SPEED: f32 = 100.0;
+
+const PLAYER_HEIGHT: f32 = 10.0;
 
 pub struct CameraState {
     aspect_ratio: f32,
-    position: (f32, f32, f32),
+    pub position: (f32, f32, f32),
     direction: (f32, f32, f32),
 
     moving_up: bool,
@@ -22,6 +25,8 @@ pub struct CameraState {
     moving_right: bool,
     moving_forward: bool,
     moving_backward: bool,
+
+    is_flying: bool
 }
 
 impl CameraState {
@@ -36,6 +41,7 @@ impl CameraState {
             moving_right: false,
             moving_forward: false,
             moving_backward: false,
+            is_flying: false
         }
     }
 
@@ -96,46 +102,57 @@ impl CameraState {
         ]
     }
 
-    pub fn update(&mut self, delta_time: f32) {
+    pub fn update(&mut self, delta_time: f32, world: &World) {
         let right = normalize(cross(WORLD_UP, self.direction));
         let camera_forward_flat = normalize((self.direction.0, 0.0, self.direction.2));
 
+
+        let movement_speed: f32 = if self.is_flying { FLYING_MOVEMENT_SPEED } else { WALKING_MOVEMENT_SPEED };
+
         if self.moving_up {
-            self.position.1 += delta_time * MOVEMENT_SPEED;
+            self.position.1 += delta_time * movement_speed;
         }
 
         if self.moving_left {
-            self.position.0 += right.0 * delta_time * MOVEMENT_SPEED;
-            self.position.2 += right.2 * delta_time * MOVEMENT_SPEED;
+            self.position.0 += right.0 * delta_time * movement_speed;
+            self.position.2 += right.2 * delta_time * movement_speed;
         }
 
         if self.moving_down {
-            self.position.1 -= delta_time * MOVEMENT_SPEED;
+            self.position.1 -= delta_time * movement_speed;
         }
 
         if self.moving_right {
-            self.position.0 -= right.0 * delta_time * MOVEMENT_SPEED;
-            self.position.2 -= right.2 * delta_time * MOVEMENT_SPEED;
+            self.position.0 -= right.0 * delta_time * movement_speed;
+            self.position.2 -= right.2 * delta_time * movement_speed;
         }
 
         if self.moving_forward {
-            self.position.0 += camera_forward_flat.0 * delta_time * MOVEMENT_SPEED;
-            self.position.2 += camera_forward_flat.2 * delta_time * MOVEMENT_SPEED;
+            self.position.0 += camera_forward_flat.0 * delta_time * movement_speed;
+            self.position.2 += camera_forward_flat.2 * delta_time * movement_speed;
         }
 
         if self.moving_backward {
-            self.position.0 -= camera_forward_flat.0 * delta_time * MOVEMENT_SPEED;
-            self.position.2 -= camera_forward_flat.2 * delta_time * MOVEMENT_SPEED;
+            self.position.0 -= camera_forward_flat.0 * delta_time * movement_speed;
+            self.position.2 -= camera_forward_flat.2 * delta_time * movement_speed;
         }
 
         self.position.0 = self.position.0.rem_euclid(WORLD_WIDTH);
         self.position.2 = self.position.2.rem_euclid(WORLD_WIDTH);
+
+        let height_as_pos = world.terrain.get_height(self.position.0 / TERRAIN_CELL_WIDTH, self.position.2 / TERRAIN_CELL_WIDTH);
+        if self.is_flying && self.position.1 < height_as_pos + PLAYER_HEIGHT {
+            self.is_flying = false;
+        }
+        if !self.is_flying {
+            self.position.1 = height_as_pos + PLAYER_HEIGHT;
+        }
     }
 
     pub fn process_input(&mut self, event: &glium::winit::event::KeyEvent) {
         let pressed = event.state == glium::winit::event::ElementState::Pressed;
         match &event.physical_key {
-            PhysicalKey::Code(KeyCode::Space) => self.moving_up = pressed,
+            PhysicalKey::Code(KeyCode::Space) => {self.moving_up = pressed; self.is_flying = true;},
             PhysicalKey::Code(KeyCode::ShiftLeft) => self.moving_down = pressed,
             PhysicalKey::Code(KeyCode::KeyA) => self.moving_left = pressed,
             PhysicalKey::Code(KeyCode::KeyD) => self.moving_right = pressed,
