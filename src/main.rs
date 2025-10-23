@@ -10,24 +10,14 @@ use std::fs;
 extern crate rand;
 extern crate noise;
 
-mod vertex_def;
-use crate::vertex_def::Vertex;
-
-mod terrain;
-use crate::terrain::TERRAIN_CELL_WIDTH;
-
-mod world;
-use crate::world::World;
-
-mod camera;
-use camera::CameraState;
-
-mod vector_math;
-mod plant_option_vec;
-
-mod generate_terrain_mesh;
-
 mod plant;
+mod render;
+mod terrain;
+mod world;
+
+use crate::world::World;
+use crate::render::camera::CameraState;
+use crate::terrain::TERRAIN_CELL_WIDTH;
 
 fn main() {
     let event_loop = glium::winit::event_loop::EventLoop::builder()
@@ -37,13 +27,13 @@ fn main() {
         .with_title("Plant Evolution Simulator")
         .build(&event_loop);
 
-    //window.set_maximized(true);
+    window.set_maximized(true);
     window.set_cursor_grab(glium::winit::window::CursorGrabMode::Confined).ok();
     window.set_cursor_visible(false);
 
-    let vertex_shader_src = fs::read_to_string("src/vertex_shader.glsl").expect("Unable to read vertex shader source");
+    let vertex_shader_src = fs::read_to_string("src/render/shader/vertex_shader.glsl").expect("Unable to read vertex shader source");
     let vertex_shader_src = vertex_shader_src.as_str();
-    let fragment_shader_src = fs::read_to_string("src/fragment_shader.glsl").expect("Unable to read fragment shader source");
+    let fragment_shader_src = fs::read_to_string("src/render/shader/fragment_shader.glsl").expect("Unable to read fragment shader source");
     let fragment_shader_src = fragment_shader_src.as_str();
 
     let program = glium::Program::from_source(&display, vertex_shader_src, fragment_shader_src, None).unwrap();

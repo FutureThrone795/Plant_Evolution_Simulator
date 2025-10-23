@@ -1,5 +1,5 @@
 use crate::terrain::{Terrain, TERRAIN_CELL_WIDTH, TERRAIN_GRID_ROWS};
-use crate::vertex_def::Vertex;
+use crate::render::Vertex;
 
 pub fn generate_terrain_mesh(terrain: &Terrain) -> (Vec<Vertex>, Vec<u32>, Vec<Vertex>, Vec<u32>) {
     let mut vertices: Vec<Vertex> = Vec::with_capacity((TERRAIN_GRID_ROWS + 1) * (TERRAIN_GRID_ROWS + 1));

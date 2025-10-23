@@ -5,15 +5,15 @@ pub const TERRAIN_RENDER_SPREAD: i32 = 1;
 
 use std::f32::consts::PI;
 
-use crate::{camera::CameraState, Vertex};
+use crate::render::{camera::CameraState, Vertex};
 
 use glium::{DrawParameters, Surface};
 
-use rand::{rng, Rng, RngCore};
+use rand::{Rng, RngCore};
 use noise::Perlin;
 use crate::noise::NoiseFn;
 
-use crate::generate_terrain_mesh::generate_terrain_mesh;
+use crate::terrain::generate_terrain_mesh::generate_terrain_mesh;
 
 #[inline]
 fn map_helper(val: f32, curr_min: f32, curr_max: f32, new_min: f32, new_max: f32) -> f32 {

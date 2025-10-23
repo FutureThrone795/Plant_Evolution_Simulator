@@ -5,7 +5,7 @@ use glium::winit::{keyboard::{KeyCode, PhysicalKey}};
 
 use crate::{terrain::{TERRAIN_CELL_WIDTH, TERRAIN_GRID_ROWS, WORLD_WIDTH}, world::World};
 
-use crate::vector_math::*;
+use crate::render::vector_math::*;
 
 const WORLD_UP: (f32, f32, f32) = (0.0, 1.0, 0.0);
 

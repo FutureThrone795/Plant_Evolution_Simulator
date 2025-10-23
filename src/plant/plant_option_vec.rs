@@ -1,7 +1,8 @@
-use crate::{plant::Plant, terrain::Terrain};
+use crate::plant::Plant;
+use crate::terrain::Terrain;
 
 use glium::{DrawParameters};
-use crate::camera::CameraState;
+use crate::render::camera::CameraState;
 
 pub struct PlantOptionVec {
     pub internal_vec: Vec<Option<Box<Plant>>>,

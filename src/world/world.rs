@@ -1,9 +1,8 @@
 use glium::DrawParameters;
 
-use crate::camera::CameraState;
-use crate::plant_option_vec::PlantOptionVec;
+use crate::render::camera::CameraState;
+use crate::plant::plant_option_vec::PlantOptionVec;
 use crate::terrain::Terrain;
-use crate::plant::Plant;
 
 pub struct World {
     pub terrain: Terrain,

@@ -2,9 +2,9 @@ use std::fmt::{Debug, Formatter};
 
 use glium::{DrawParameters, Surface};
 
-use crate::camera::CameraState;
+use crate::render::camera::CameraState;
 use crate::terrain::{Terrain, TERRAIN_CELL_WIDTH};
-use crate::vertex_def::Vertex;
+use crate::render::Vertex;
 
 pub struct Plant {
     //pub genome: <What type is this?>,
