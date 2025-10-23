@@ -15,6 +15,7 @@ mod render;
 mod terrain;
 mod world;
 
+use crate::plant::genome::PlantGenome;
 use crate::world::World;
 use crate::render::camera::CameraState;
 use crate::terrain::TERRAIN_CELL_WIDTH;
@@ -89,7 +90,13 @@ fn main() {
                         },
                         glium::winit::keyboard::PhysicalKey::Code(glium::winit::keyboard::KeyCode::KeyK) => {
                             if event.state.is_pressed() {
-                                let new_plant = plant::Plant::new(camera.position.0 / TERRAIN_CELL_WIDTH, camera.position.2 / TERRAIN_CELL_WIDTH, 1000.0, &world.terrain);
+                                let new_plant = plant::Plant::new(
+                                    PlantGenome::random(), 
+                                    camera.position.0 / TERRAIN_CELL_WIDTH, 
+                                    camera.position.2 / TERRAIN_CELL_WIDTH, 
+                                    1000.0, 
+                                    &world.terrain
+                                );
                                 println!("New plant created at {:?} with camera position {:?}", new_plant.root_position, camera.position);
                                 world.plants.add_plant(new_plant);
                             }

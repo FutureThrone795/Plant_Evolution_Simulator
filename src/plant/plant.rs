@@ -5,9 +5,13 @@ use glium::{DrawParameters, Surface};
 use crate::render::camera::CameraState;
 use crate::terrain::{Terrain, TERRAIN_CELL_WIDTH};
 use crate::render::Vertex;
+use crate::plant::growth_priority_item::GrowthPriorityItem;
+use crate::plant::genome::PlantGenome;
+
+use std::collections::BinaryHeap;
 
 pub struct Plant {
-    //pub genome: <What type is this?>,
+    pub genome: PlantGenome,
 
     pub root_position: (f32, f32, f32),
     //pub root_branch: Box<Branch>,
@@ -28,6 +32,7 @@ impl Plant {
         //Returns false when the plant has died and should be removed
 
         let mut homeostasis: f32 = 2.0;
+        let mut growth_priority_heap: BinaryHeap<GrowthPriorityItem> = BinaryHeap::new();
 
         //recursively tick root branch
 
@@ -43,7 +48,15 @@ impl Plant {
         
         self.current_energy -= homeostasis;
 
-        return self.current_energy > 0.0;
+        if self.current_energy < 0.0 {
+            return false;
+        }
+
+        while !growth_priority_heap.is_empty() && self.current_energy > self.genome.min_enegy_for_growth {
+
+        }
+
+        return true;
     }
 
     pub fn render(
@@ -93,8 +106,9 @@ impl Plant {
         target.draw(&vertex_buffer, &index_buffer, program, &uniforms, params).unwrap();
     }
 
-    pub fn new (x: f32, z: f32, starting_energy: f32, terrain: &Terrain) -> Plant {
+    pub fn new (genome: PlantGenome, x: f32, z: f32, starting_energy: f32, terrain: &Terrain) -> Plant {
         return Plant {
+            genome: genome,
             root_position: (x, terrain.get_height(x, z), z),
             current_energy: starting_energy,
             current_sunlight: 0.0,
