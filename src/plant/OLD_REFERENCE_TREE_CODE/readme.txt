@@ -1,0 +1,1 @@
+This file directory contians the bad annoying code from when I was coding the trees as linked lists, which ultimately sucked for implementation.

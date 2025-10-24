@@ -1,4 +1,4 @@
-use std::rc::Rc;
+use rand::rng;
 
 use crate::plant::branch::Branch;
 use crate::plant::Plant;
@@ -15,7 +15,9 @@ struct GenomeVal {
 
 pub enum OffshootSelection {
     One,
-    Two
+    Two,
+    Longest,
+    Random
 }
 
 enum RuleReq {
@@ -40,18 +42,18 @@ pub enum RuleOutcome {
     //JumpToRule(usize), //Removed for concerns of infinite loops
     KillOffshoot(OffshootSelection),
     ChangeSelfProperty{
-        strength_factor: f32, 
-        photoreceptiveness_factor: f32, 
-        water_intake_factor: f32,
-        length_factor: f32
+        strength: f32, 
+        photoreceptiveness: f32, 
+        water_intake: f32,
+        length: f32
     },
     RequestNewOffshoot{
-        priority: f32,
+        priority: f32, 
         placement_straightness: f32,
-        strength: f32,
-        photoreceptiveness: f32,
+        strength: f32, 
+        photoreceptiveness: f32, 
         water_intake: f32,
-        length: f32,
+        length: f32
     }
 }
 
@@ -63,7 +65,7 @@ pub struct GenomeRule {
 }
 
 impl GenomeRule {
-    pub fn evaluate(&self, depth: usize, branch: &Branch, plant: &Plant, terrain: &Terrain) -> Option<&RuleOutcome> {
+    pub fn execute(&self, depth: usize, branch: &Branch, plant: &Plant, terrain: &Terrain) -> Option<&RuleOutcome> {
         let comp_val = match self.req {
             RuleReq::BranchDepthReq => depth as f32,
             RuleReq::BranchStrengthReq => branch.strength,
@@ -90,8 +92,8 @@ impl GenomeRule {
     pub fn random() -> GenomeRule {
         return GenomeRule { 
             req: RuleReq::BranchDepthReq, 
-            min: rand::rng().random_range(0.0 .. 20.0), 
-            max: rand::rng().random_range(0.0 .. 20.0), 
+            min: rng().random_range(0.0 .. 20.0), 
+            max: rng().random_range(0.0 .. 20.0), 
             outcome: RuleOutcome::Exit //TEMP 
         }
     }
@@ -140,12 +142,12 @@ impl PlantGenome {
                     min: -1.0,
                     max: 5.5,
                     outcome: RuleOutcome::RequestNewOffshoot { 
-                        priority: 10.0,
+                        priority: 10.0, 
                         placement_straightness: 0.5, 
                         strength: 0.3,
-                        photoreceptiveness: 0.9,
-                        water_intake: 0.5,
-                        length: 3.0,
+                        photoreceptiveness: 0.9, 
+                        water_intake: 0.5, 
+                        length: 3.0 
                     }
                 },
                 GenomeRule {
@@ -154,11 +156,11 @@ impl PlantGenome {
                     max: 10.0,
                     outcome: RuleOutcome::RequestNewOffshoot { 
                         priority: 5.0, 
-                        placement_straightness: 0.0,
+                        placement_straightness: 0.0, 
                         strength: 0.1,
-                        photoreceptiveness: 1.0,
-                        water_intake: 0.1,
-                        length: 0.3,
+                        photoreceptiveness: 1.0, 
+                        water_intake: 0.1, 
+                        length: 0.3 
                     }
                 },
                 GenomeRule {
@@ -172,10 +174,10 @@ impl PlantGenome {
                     min: -1.0,
                     max: 4.0,
                     outcome: RuleOutcome::ChangeSelfProperty { 
-                        strength_factor: 1.0, 
-                        photoreceptiveness_factor: -1.0, 
-                        water_intake_factor: -1.0, 
-                        length_factor: 1.0 
+                        strength: 1.0, 
+                        photoreceptiveness: -1.0, 
+                        water_intake: -1.0, 
+                        length: 1.0 
                     }
                 }
             ] 

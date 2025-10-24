@@ -1,7 +1,26 @@
+use std::f32::consts::PI;
+
+use crate::plant::growth_priority_item::GrowthPriorityItem;
+use crate::rand::Rng;
+
 pub struct BranchConnection{
-    pub branch: Box<Branch>, 
+    pub branch_index: usize, 
     pub yaw: f32, 
-    pub pitch:f32
+    pub pitch: f32,
+    pub along_length: f32
+}
+
+impl BranchConnection {
+    pub fn new(growth_priority_item: &GrowthPriorityItem, new_index: usize) -> BranchConnection {
+        let along_length: f32 = 1.0 - (1.0 - growth_priority_item.placement_straightness) * rand::rng().random_range(0.0 .. 1.0);
+
+        return BranchConnection { 
+            branch_index: new_index, 
+            yaw: rand::rng().random_range(0.0 .. 2.0*PI), 
+            pitch: (1.0 - along_length) * PI * 0.5,
+            along_length
+        }
+    }
 }
 
 pub struct Branch {
@@ -16,8 +35,35 @@ pub struct Branch {
 }
 
 impl Branch {
+    pub fn new(strength: f32, photoreceptiveness: f32, water_intake: f32, length: f32) -> Branch {
+        return Branch {
+            strength,
+            photoreceptiveness,
+            water_intake,
+            length,
+            offshoot_1: None,
+            offshoot_2: None,
+        }
+    }
+
+    pub fn calculate_cost_from_individual_parts(strength: f32, photoreceptiveness: f32, water_intake: f32, length: f32) -> f32 {
+        return 10.0 + 20.0 * length * (strength + photoreceptiveness + water_intake).powi(2);
+    }
+
     pub fn calculate_cost(&self) -> f32 {
-        return 100.0 + 200.0 * self.length * (self.strength + self.photoreceptiveness + self.water_intake).powf(1.5);
+        return 10.0 + 20.0 * self.length * (self.strength + self.photoreceptiveness + self.water_intake).powi(2);
+    }
+
+    pub fn calculate_homeostasis(&self) -> f32 {
+        return 0.5 + 0.1 * self.length * (self.strength + self.photoreceptiveness + self.water_intake).powi(2);
+    }
+
+    pub fn calculate_collect_sunlight(&self, depth: usize) -> f32 {
+        return 0.2 * self.length * self.photoreceptiveness * depth as f32; //TODO: Make this depend on height
+    }
+
+    pub fn calculate_collect_water(&self, depth: usize) -> f32 {
+        return self.length * self.water_intake / depth as f32;
     }
 
     pub fn add_offshoot(&mut self, branch_connection: BranchConnection) {
@@ -36,5 +82,18 @@ impl Branch {
             Some(_) => ()
         }
         panic!("Attempted to add an offshoot to a branch with two existing children");
+    }
+}
+
+impl From<&GrowthPriorityItem> for Branch {
+    fn from(growth_priority_item: &GrowthPriorityItem) -> Branch { 
+        return Branch { 
+            strength: growth_priority_item.strength, 
+            photoreceptiveness: growth_priority_item.photoreceptiveness, 
+            water_intake: growth_priority_item.water_intake, 
+            length: growth_priority_item.length, 
+            offshoot_1: None, 
+            offshoot_2: None
+        }
     }
 }

@@ -1,0 +1,10 @@
+starting branch: medium strength, takes in a medium amount of water and a lot of sunlight
+minimum energy for growth: medium
+energy for baby: high
+
+if plant has depth more than 7, exit
+if plant has low amounts of energy, exit
+if plant has depth less than 6, [AND HAS EMPTY SLOT, IMPLIED], make big branches with high water and sunlight and decent strength (exit)
+if plant has depth greater than 6, [AND HAS EMPTY SLOT, IMPLIED], make small branches (leaves) with high sunlight, low water, and low strength (exit)
+if plant has low or medium amounts of energy, exit
+if plant has depth less than 4, increase strength and reduce sunlight (exit)

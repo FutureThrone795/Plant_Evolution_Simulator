@@ -7,6 +7,7 @@ use crate::terrain::{Terrain, TERRAIN_CELL_WIDTH};
 use crate::render::Vertex;
 use crate::plant::growth_priority_item::GrowthPriorityItem;
 use crate::plant::genome::PlantGenome;
+use crate::plant::branch::{Branch, BranchConnection};
 
 use std::collections::BinaryHeap;
 
@@ -14,7 +15,7 @@ pub struct Plant {
     pub genome: PlantGenome,
 
     pub root_position: (f32, f32, f32),
-    //pub root_branch: Box<Branch>,
+    pub branches: Vec<Branch>,
     
     pub current_energy: f32,
     pub current_water: f32,
@@ -34,7 +35,7 @@ impl Plant {
         let mut homeostasis: f32 = 2.0;
         let mut growth_priority_heap: BinaryHeap<GrowthPriorityItem> = BinaryHeap::new();
 
-        //recursively tick root branch
+        self.execute_branch_recursive(&mut homeostasis, 0, &mut growth_priority_heap, 0, terrain);
 
         if self.current_water > self.current_sunlight {
             self.current_energy += self.current_water;
@@ -53,7 +54,16 @@ impl Plant {
         }
 
         while !growth_priority_heap.is_empty() && self.current_energy > self.genome.min_enegy_for_growth {
-
+            if self.current_energy - growth_priority_heap.peek().unwrap().cost() > self.genome.min_enegy_for_growth {
+                let growth_priority_item: GrowthPriorityItem = growth_priority_heap.pop().unwrap();
+                let new_index: usize = self.branches.len();
+                let new_offshoot = BranchConnection::new(&growth_priority_item, new_index);
+                
+                self.branches.push(Branch::from(&growth_priority_item));
+                self.branches[growth_priority_item.parent_branch_index].add_offshoot(new_offshoot);
+            } else {
+                break;
+            }
         }
 
         return true;
@@ -110,6 +120,7 @@ impl Plant {
         return Plant {
             genome: genome,
             root_position: (x, terrain.get_height(x, z), z),
+            branches: vec![],
             current_energy: starting_energy,
             current_sunlight: 0.0,
             current_water: 0.0
