@@ -6,13 +6,14 @@ out vec4 vertex_color;
 
 uniform mat4 perspective;
 uniform mat4 view;
-uniform vec3 offset;
+uniform mat4 model;
 
 const float FOG_MIN = 700.0;
 const float FOG_MAX = 1024.0;
 
 void main() {
-    vec4 worldspace = view * vec4(position + offset, 1.0);
+    vec4 pos = model * vec4(position, 1.0);
+    vec4 worldspace = view * pos;
     float dist = length(worldspace);
     gl_Position = perspective * worldspace;
 

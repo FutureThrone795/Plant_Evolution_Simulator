@@ -101,7 +101,10 @@ pub struct PlantGenome {
     pub min_enegy_for_growth: f32,
     pub make_baby_req_energy: f32,
 
-    pub initial_branch: Branch,
+    pub sapling_strength: f32,
+    pub sapling_photoreceptiveness: f32,
+    pub sapling_water_intake: f32,
+    pub sapling_length: f32,
 
     pub rules: Vec<GenomeRule>
 }
@@ -112,7 +115,10 @@ impl PlantGenome {
             min_enegy_for_growth: 10.0, 
             make_baby_req_energy: 100.0, 
 
-            initial_branch: Branch { strength: 0.0, photoreceptiveness: 0.0, water_intake: 0.0, length: 10.0, offshoot_1: None, offshoot_2: None },
+            sapling_strength: 0.0, 
+            sapling_photoreceptiveness: 0.0, 
+            sapling_water_intake: 0.0, 
+            sapling_length: 10.0,
 
             rules: vec![GenomeRule::random(), GenomeRule::random(), GenomeRule::random(), GenomeRule::random()] 
         }
@@ -121,7 +127,12 @@ impl PlantGenome {
         return PlantGenome { 
             min_enegy_for_growth: 10.0, 
             make_baby_req_energy: 100.0, 
-            initial_branch: Branch { strength: 0.3, photoreceptiveness: 0.9, water_intake: 0.5, length: 5.0, offshoot_1: None, offshoot_2: None }, 
+
+            sapling_strength: 0.3, 
+            sapling_photoreceptiveness: 0.9, 
+            sapling_water_intake: 0.5, 
+            sapling_length: 0.5,
+
             rules: vec![
                 GenomeRule {
                     req: RuleReq::BranchDepthReq,
@@ -145,7 +156,7 @@ impl PlantGenome {
                         strength: 0.3,
                         photoreceptiveness: 0.9,
                         water_intake: 0.5,
-                        length: 3.0,
+                        length: 0.3,
                     }
                 },
                 GenomeRule {
@@ -158,7 +169,7 @@ impl PlantGenome {
                         strength: 0.1,
                         photoreceptiveness: 1.0,
                         water_intake: 0.1,
-                        length: 0.3,
+                        length: 0.1,
                     }
                 },
                 GenomeRule {

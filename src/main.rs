@@ -88,10 +88,15 @@ fn main() {
                         glium::winit::keyboard::PhysicalKey::Code(glium::winit::keyboard::KeyCode::Escape) => {
                             window_target.exit();
                         },
+                        glium::winit::keyboard::PhysicalKey::Code(glium::winit::keyboard::KeyCode::KeyP) => {
+                            if event.state.is_pressed() {
+                                println!("{:?}", world.plants);
+                            }
+                        },
                         glium::winit::keyboard::PhysicalKey::Code(glium::winit::keyboard::KeyCode::KeyK) => {
                             if event.state.is_pressed() {
                                 let new_plant = plant::Plant::new(
-                                    PlantGenome::random(), 
+                                    PlantGenome::human_made_tree_genome(), 
                                     camera.position.0 / TERRAIN_CELL_WIDTH, 
                                     camera.position.2 / TERRAIN_CELL_WIDTH, 
                                     1000.0, 

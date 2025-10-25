@@ -5,6 +5,7 @@ pub const TERRAIN_RENDER_SPREAD: i32 = 1;
 
 use std::f32::consts::PI;
 
+use crate::render::mat4_def::Mat4;
 use crate::render::{camera::CameraState, Vertex};
 
 use glium::{DrawParameters, Surface};
@@ -255,10 +256,11 @@ impl Terrain {
 
         for x in (-TERRAIN_RENDER_SPREAD)..(TERRAIN_RENDER_SPREAD + 1) {
             for z in (-TERRAIN_RENDER_SPREAD)..(TERRAIN_RENDER_SPREAD + 1) {
+                let offset = Mat4::translation(WORLD_WIDTH * x as f32, 0.0, WORLD_WIDTH * z as f32);
                 let uniforms = uniform! {
                     view: camera.get_view(),
-                    perspective: camera.get_perspective(),
-                    offset: [WORLD_WIDTH * x as f32, 0.0, WORLD_WIDTH * z as f32]
+                    perspective: camera.get_perspective().0,
+                    model: offset.0
                 };
 
                 target.draw(&vertex_buffer, &index_buffer, program, &uniforms, params).unwrap();
@@ -266,10 +268,11 @@ impl Terrain {
         }
         for x in (-TERRAIN_RENDER_SPREAD)..(TERRAIN_RENDER_SPREAD + 1) {
             for z in (-TERRAIN_RENDER_SPREAD)..(TERRAIN_RENDER_SPREAD + 1) {
+                let offset = Mat4::translation(WORLD_WIDTH * x as f32, 0.0, WORLD_WIDTH * z as f32);
                 let uniforms = uniform! {
                     view: camera.get_view(),
-                    perspective: camera.get_perspective(),
-                    offset: [WORLD_WIDTH * x as f32, self.water_height, WORLD_WIDTH * z as f32]
+                    perspective: camera.get_perspective().0,
+                    model: offset.0
                 };
 
                 target.draw(&water_vertex_buffer, &water_index_buffer, program, &uniforms, params).unwrap();

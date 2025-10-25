@@ -55,7 +55,7 @@ impl Branch {
     }
 
     pub fn calculate_homeostasis(&self) -> f32 {
-        return 0.5 + 0.1 * self.length * (self.strength + self.photoreceptiveness + self.water_intake).powi(2);
+        return 0.02 + 0.1 * self.length * (self.strength + self.photoreceptiveness + self.water_intake).powi(2);
     }
 
     pub fn calculate_collect_sunlight(&self, depth: usize) -> f32 {
@@ -63,7 +63,7 @@ impl Branch {
     }
 
     pub fn calculate_collect_water(&self, depth: usize) -> f32 {
-        return self.length * self.water_intake / depth as f32;
+        return self.length * self.water_intake / (depth + 1) as f32;
     }
 
     pub fn add_offshoot(&mut self, branch_connection: BranchConnection) {

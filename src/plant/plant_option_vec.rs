@@ -1,3 +1,5 @@
+use std::fmt::{Debug, Formatter};
+
 use crate::plant::Plant;
 use crate::terrain::Terrain;
 
@@ -7,6 +9,12 @@ use crate::render::camera::CameraState;
 pub struct PlantOptionVec {
     pub internal_vec: Vec<Option<Box<Plant>>>,
     first_none: Option<usize>
+}
+
+impl Debug for PlantOptionVec {
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), std::fmt::Error> { 
+        return write!(f, "{:?}", self.internal_vec);
+    }
 }
 
 impl PlantOptionVec {

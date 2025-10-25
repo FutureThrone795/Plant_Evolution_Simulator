@@ -1,10 +1,12 @@
 // Lifted from https://github.com/glium/glium/blob/master/examples/support/camera.rs
 // With a bunch of changes to make it work for my program
 
+use std::f32::consts::PI;
+
 use glium::winit::{keyboard::{KeyCode, PhysicalKey}};
 
 use crate::{terrain::{TERRAIN_CELL_WIDTH, TERRAIN_GRID_ROWS, WORLD_WIDTH}, world::World};
-
+use crate::render::mat4_def::Mat4;
 use crate::render::vector_math::*;
 
 const WORLD_UP: (f32, f32, f32) = (0.0, 1.0, 0.0);
@@ -53,20 +55,8 @@ impl CameraState {
         self.direction = dir;
     }
 
-    pub fn get_perspective(&self) -> [[f32; 4]; 4] {
-        let fov: f32 = 3.141592 / 2.0;
-        let zfar = 1024.0;
-        let znear = 0.1;
-
-        let f = 1.0 / (fov / 2.0).tan();
-
-        // note: remember that this is column-major, so the lines of code are actually columns
-        [
-            [f / self.aspect_ratio,    0.0,              0.0              ,   0.0],
-            [         0.0         ,     f ,              0.0              ,   0.0],
-            [         0.0         ,    0.0,  (zfar+znear)/(zfar-znear)    ,   1.0],
-            [         0.0         ,    0.0, -(2.0*zfar*znear)/(zfar-znear),   0.0],
-        ]
+    pub fn get_perspective(&self) -> Mat4 {
+        return Mat4::perspective(PI / 2.0, self.aspect_ratio, 0.1, 1024.0);
     }
 
     pub fn get_view(&self) -> [[f32; 4]; 4] {

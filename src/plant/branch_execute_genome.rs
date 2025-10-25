@@ -62,7 +62,6 @@ impl Plant {
                                     Some(connection) => {
                                         returned_energy = self.branches[connection.branch_index].calculate_cost();
                                         branch_target_index = connection.branch_index;
-                                        self.branches[branch_index].offshoot_1 = None;
                                     }
                                     None => {
                                         continue;
@@ -74,7 +73,6 @@ impl Plant {
                                     Some(connection) => {
                                         returned_energy = self.branches[connection.branch_index].calculate_cost();
                                         branch_target_index = connection.branch_index;
-                                        self.branches[branch_index].offshoot_2 = None;
                                     }
                                     None => {
                                         continue;
@@ -83,8 +81,9 @@ impl Plant {
                             }
                         }
 
+                        self.delete_branch_recursive(branch_target_index);
                         self.current_energy += returned_energy;
-                        self.branches.remove(branch_target_index);
+                        break;
                     },
 
 
@@ -99,6 +98,7 @@ impl Plant {
                         self.branches[branch_index].photoreceptiveness = modify_self_property_helper(self.branches[branch_index].photoreceptiveness, *photoreceptiveness_factor);
                         self.branches[branch_index].water_intake = modify_self_property_helper(self.branches[branch_index].water_intake, *water_intake_factor);
                         self.branches[branch_index].length = modify_self_property_helper(self.branches[branch_index].length, *length_factor);
+                        break;
                     },
 
 

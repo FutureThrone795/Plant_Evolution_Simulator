@@ -1,10 +1,10 @@
 use std::fmt::{Debug, Formatter};
 
-use glium::{DrawParameters, Surface};
+use glium::DrawParameters;
 
 use crate::render::camera::CameraState;
+use crate::render::mat4_def::Mat4;
 use crate::terrain::{Terrain, TERRAIN_CELL_WIDTH};
-use crate::render::Vertex;
 use crate::plant::growth_priority_item::GrowthPriorityItem;
 use crate::plant::genome::PlantGenome;
 use crate::plant::branch::{Branch, BranchConnection};
@@ -24,7 +24,7 @@ pub struct Plant {
 
 impl Debug for Plant {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), std::fmt::Error> { 
-        return write!(f, "Plant")
+        return write!(f, "Plant: (Branch count: {:?}, Energy: {})", self.branches.len(), self.current_energy)
     }
 }
 
@@ -37,14 +37,16 @@ impl Plant {
 
         self.execute_branch_recursive(&mut homeostasis, 0, &mut growth_priority_heap, 0, terrain);
 
+        //println!("{}, {}, {}, {}", self.current_energy, homeostasis, self.current_water, self.current_sunlight);
+
         if self.current_water > self.current_sunlight {
             self.current_energy += self.current_water;
             self.current_sunlight -= self.current_water;
-            self.current_energy = 0.0;
+            self.current_water = 0.0;
         } else {
             self.current_energy += self.current_sunlight;
+            self.current_water -= self.current_sunlight;
             self.current_sunlight = 0.0;
-            self.current_energy -= self.current_sunlight;
         }
         
         self.current_energy -= homeostasis;
@@ -69,6 +71,22 @@ impl Plant {
         return true;
     }
 
+    pub fn delete_branch_recursive(&mut self, branch_index: usize) {
+        match &self.branches[branch_index].offshoot_1 {
+            Some(connection) => {
+                self.delete_branch_recursive(connection.branch_index);
+            }
+            None => ()
+        }
+        match &self.branches[branch_index].offshoot_2 {
+            Some(connection) => {
+                self.delete_branch_recursive(connection.branch_index);
+            }
+            None => ()
+        }
+        self.branches.remove(branch_index);
+    }
+
     pub fn render(
         &self, 
         target: &mut glium::Frame, 
@@ -77,6 +95,11 @@ impl Plant {
         camera: &CameraState,
         params: &DrawParameters
     ) {
+        let matrix = Mat4::translation(self.root_position.0 * TERRAIN_CELL_WIDTH, self.root_position.1, self.root_position.2 * TERRAIN_CELL_WIDTH);
+
+        self.render_branch_recursive(0, target, program, display, camera, params, matrix);
+
+        /*
         let vertices: Vec<Vertex> = vec![
             Vertex {    
                 position: [ 0.0,  0.0,  0.0], color: [self.current_energy / 1000.0, 0.0, 0.0, 1.0]
@@ -109,18 +132,20 @@ impl Plant {
 
         let uniforms = uniform! {
             view: camera.get_view(),
-            perspective: camera.get_perspective(),
-            offset: [self.root_position.0 * TERRAIN_CELL_WIDTH, self.root_position.1, self.root_position.2 * TERRAIN_CELL_WIDTH]
+            perspective: camera.get_perspective().0,
+            model: matrix.0
         };
 
         target.draw(&vertex_buffer, &index_buffer, program, &uniforms, params).unwrap();
+        */
     }
 
     pub fn new (genome: PlantGenome, x: f32, z: f32, starting_energy: f32, terrain: &Terrain) -> Plant {
         return Plant {
+            branches: vec![Branch::new(genome.sapling_strength, genome.sapling_photoreceptiveness, genome.sapling_water_intake, genome.sapling_length)],
+
             genome: genome,
             root_position: (x, terrain.get_height(x, z), z),
-            branches: vec![],
             current_energy: starting_energy,
             current_sunlight: 0.0,
             current_water: 0.0
