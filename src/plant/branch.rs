@@ -47,11 +47,11 @@ impl Branch {
     }
 
     pub fn calculate_cost_from_individual_parts(strength: f32, photoreceptiveness: f32, water_intake: f32, length: f32) -> f32 {
-        return 10.0 + 20.0 * length * (strength + photoreceptiveness + water_intake).powi(2);
+        return 50.0 + 40.0 * length * (strength + photoreceptiveness + water_intake).powi(2);
     }
 
     pub fn calculate_cost(&self) -> f32 {
-        return 10.0 + 20.0 * self.length * (self.strength + self.photoreceptiveness + self.water_intake).powi(2);
+        return Self::calculate_cost_from_individual_parts(self.strength, self.photoreceptiveness, self.water_intake, self.length);
     }
 
     pub fn calculate_homeostasis(&self) -> f32 {

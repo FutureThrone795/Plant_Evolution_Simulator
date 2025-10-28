@@ -1,47 +1,48 @@
 use crate::render::Vertex;
+use crate::render::mat4_def::Mat4;
 
-pub fn generate_branch_model(color: [f32; 4]) -> (Vec<Vertex>, Vec<u32>) {
+pub fn generate_branch_model(color: [f32; 4], matrix: Mat4, start_index: u32) -> (Vec<Vertex>, Vec<u32>) {
     let vertices: Vec<Vertex> = vec![
         Vertex {
-            position: [0.0, -0.1, 0.0],
+            position: matrix.mul_vec3_as_slice([0.0, -0.1, 0.0]),
             color: color.clone()
         },
         Vertex {
-            position: [0.1, 0.0, 0.1],
+            position: matrix.mul_vec3_as_slice([0.1, 0.0, 0.1]),
             color: color.clone()
         },
         Vertex {
-            position: [-0.1, 0.0, 0.1],
+            position: matrix.mul_vec3_as_slice([-0.1, 0.0, 0.1]),
             color: color.clone()
         },
         Vertex {
-            position: [-0.1, 0.0, -0.1],
+            position: matrix.mul_vec3_as_slice([-0.1, 0.0, -0.1]),
             color: color.clone()
         },
         Vertex {
-            position: [0.1, 0.0, -0.1],
+            position: matrix.mul_vec3_as_slice([0.1, 0.0, -0.1]),
             color: color.clone()
         },
 
         
         Vertex {
-            position: [0.1, 1.0, 0.1],
+            position: matrix.mul_vec3_as_slice([0.1, 1.0, 0.1]),
             color: color.clone()
         },
         Vertex {
-            position: [-0.1, 1.0, 0.1],
+            position: matrix.mul_vec3_as_slice([-0.1, 1.0, 0.1]),
             color: color.clone()
         },
         Vertex {
-            position: [-0.1, 1.0, -0.1],
+            position: matrix.mul_vec3_as_slice([-0.1, 1.0, -0.1]),
             color: color.clone()
         },
         Vertex {
-            position: [0.1, 1.0, -0.1],
+            position: matrix.mul_vec3_as_slice([0.1, 1.0, -0.1]),
             color: color.clone()
         },
         Vertex {
-            position: [0.0, 1.1, 0.0],
+            position: matrix.mul_vec3_as_slice([0.0, 1.1, 0.0]),
             color: color.clone()
         }
     ];
@@ -63,7 +64,7 @@ pub fn generate_branch_model(color: [f32; 4]) -> (Vec<Vertex>, Vec<u32>) {
         7, 9, 6,
         6, 9, 5,
         5, 9, 8        
-    ];
+    ].iter().map(|x| *x + start_index).collect();
 
     return (vertices, indices);
 }

@@ -1,6 +1,6 @@
 use std::ops::{Mul, Index, IndexMut};
 
-/// 4x4 column-major matrix
+// 4x4 column-major matrix
 #[derive(Debug, Clone, PartialEq)]
 pub struct Mat4(pub [[f32; 4]; 4]);
 
@@ -64,8 +64,8 @@ impl Mat4 {
         ]);
     }
 
-    pub fn rotation_axis(axis: [f32; 3], angle: f32) -> Mat4 {
-        let [x, y, z] = axis;
+    pub fn rotation_axis(axis: (f32, f32, f32), angle: f32) -> Mat4 {
+        let (x, y, z) = axis;
         let len = (x*x + y*y + z*z).sqrt();
         if len == 0.0 {
             return Mat4::identity();
@@ -116,9 +116,19 @@ impl Mat4 {
         return result;
     }
 
-    /// Transform a 4D vector by this matrix.
-    pub fn mul_vec4(&self, v: [f32; 4]) -> [f32; 4] {
-        let mut out = [0.0; 4];
+    pub fn mul_vec4(&self, v: (f32, f32, f32, f32)) -> (f32, f32, f32, f32) {
+        let mut out: [f32; 4] = [0.0; 4];
+        for i in 0..4 {
+            out[i] = self.0[0][i] * v.0
+                   + self.0[1][i] * v.1
+                   + self.0[2][i] * v.2
+                   + self.0[3][i] * v.3;
+        }
+        return (out[0], out[1], out[2], out[3]);
+    }
+
+    pub fn mul_vec4_as_slice(&self, v: [f32; 4]) -> [f32; 4] {
+        let mut out: [f32; 4] = [0.0; 4];
         for i in 0..4 {
             out[i] = self.0[0][i] * v[0]
                    + self.0[1][i] * v[1]
@@ -128,7 +138,11 @@ impl Mat4 {
         return out;
     }
 
-    /// Returns the transposed matrix.
+    pub fn mul_vec3_as_slice(&self, v: [f32; 3]) -> [f32; 3] {
+        let out = self.mul_vec4_as_slice([v[0], v[1], v[2], 1.0]);
+        return [out[0], out[1], out[2]];
+    }
+
     pub fn transpose(&self) -> Mat4 {
         let mut m = Mat4::zero();
         for i in 0..4 {

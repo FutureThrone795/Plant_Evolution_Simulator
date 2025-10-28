@@ -1,6 +1,7 @@
 use std::fmt::{Debug, Formatter};
 
 use glium::DrawParameters;
+use crate::glium::Surface;
 
 use crate::render::camera::CameraState;
 use crate::render::mat4_def::Mat4;
@@ -8,11 +9,13 @@ use crate::terrain::{Terrain, TERRAIN_CELL_WIDTH};
 use crate::plant::growth_priority_item::GrowthPriorityItem;
 use crate::plant::genome::PlantGenome;
 use crate::plant::branch::{Branch, BranchConnection};
+use crate::render::Vertex;
 
 use std::collections::BinaryHeap;
 
 pub struct Plant {
     pub genome: PlantGenome,
+    pub age_ticks: u64,
 
     pub root_position: (f32, f32, f32),
     pub branches: Vec<Branch>,
@@ -32,12 +35,15 @@ impl Plant {
     pub fn tick(&mut self, terrain: &Terrain) -> bool {
         //Returns false when the plant has died and should be removed
 
+        self.age_ticks += 1;
+        if self.age_ticks > 100 {
+            return true;
+        }
+
         let mut homeostasis: f32 = 2.0;
         let mut growth_priority_heap: BinaryHeap<GrowthPriorityItem> = BinaryHeap::new();
 
         self.execute_branch_recursive(&mut homeostasis, 0, &mut growth_priority_heap, 0, terrain);
-
-        //println!("{}, {}, {}, {}", self.current_energy, homeostasis, self.current_water, self.current_sunlight);
 
         if self.current_water > self.current_sunlight {
             self.current_energy += self.current_water;
@@ -95,37 +101,12 @@ impl Plant {
         camera: &CameraState,
         params: &DrawParameters
     ) {
-        let matrix = Mat4::translation(self.root_position.0 * TERRAIN_CELL_WIDTH, self.root_position.1, self.root_position.2 * TERRAIN_CELL_WIDTH);
+        let matrix = Mat4::identity();
 
-        self.render_branch_recursive(0, target, program, display, camera, params, matrix);
+        let mut vertices: Vec<Vertex> = vec![];
+        let mut indices: Vec<u32> = vec![];
 
-        /*
-        let vertices: Vec<Vertex> = vec![
-            Vertex {    
-                position: [ 0.0,  0.0,  0.0], color: [self.current_energy / 1000.0, 0.0, 0.0, 1.0]
-            },
-            Vertex {    
-                position: [ 2.0, 10.0,  2.0], color: [self.current_energy / 1000.0, 0.0, 0.0, 1.0]
-            },
-            Vertex {    
-                position: [ 2.0, 10.0, -2.0], color: [self.current_energy / 1000.0, 0.0, 0.0, 1.0]
-            },
-            Vertex {    
-                position: [-2.0, 10.0, -2.0], color: [self.current_energy / 1000.0, 0.0, 0.0, 1.0]
-            },
-            Vertex {    
-                position: [-2.0, 10.0,  2.0], color: [self.current_energy / 1000.0, 0.0, 0.0, 1.0]
-            }
-        ];
-
-        let indices: Vec<u32> = vec![
-            0, 1, 2, 
-            0, 2, 3, 
-            0, 3, 4, 
-            0, 4, 1, 
-            1, 3, 2, 
-            1, 4, 3
-        ];
+        self.render_branch_recursive(0, &mut vertices, &mut indices, matrix);
 
         let vertex_buffer = glium::VertexBuffer::new(display, &vertices).unwrap();
         let index_buffer = glium::IndexBuffer::new(display, glium::index::PrimitiveType::TrianglesList, &indices).unwrap();
@@ -133,16 +114,16 @@ impl Plant {
         let uniforms = uniform! {
             view: camera.get_view(),
             perspective: camera.get_perspective().0,
-            model: matrix.0
+            model: Mat4::translation(self.root_position.0 * TERRAIN_CELL_WIDTH, self.root_position.1, self.root_position.2 * TERRAIN_CELL_WIDTH).0
         };
 
         target.draw(&vertex_buffer, &index_buffer, program, &uniforms, params).unwrap();
-        */
     }
 
     pub fn new (genome: PlantGenome, x: f32, z: f32, starting_energy: f32, terrain: &Terrain) -> Plant {
         return Plant {
             branches: vec![Branch::new(genome.sapling_strength, genome.sapling_photoreceptiveness, genome.sapling_water_intake, genome.sapling_length)],
+            age_ticks: 0,
 
             genome: genome,
             root_position: (x, terrain.get_height(x, z), z),

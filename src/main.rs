@@ -43,6 +43,7 @@ fn main() {
     let mut total_time: f64 = 0.0;
     let mut delta_time: f64 = 0.0;
     let mut prev_instant = Instant::now();
+    let mut total_ticks: u64 = 0;
 
     let mut world: World = World::world_init();
 
@@ -75,7 +76,12 @@ fn main() {
                     let mut target = display.draw();
                     target.clear_color_and_depth((0.60, 0.75, 0.95, 1.0), 1.0);
 
-                    world.tick(delta_time, total_time);
+                    // 20 ticks a second
+                    if total_ticks < (total_time * 20.0) as u64 {
+                        total_ticks += 1;
+                        world.tick(delta_time, total_ticks);
+                    }
+
                     world.render(&mut target, &program, &display, &camera, &params);
 
                     target.finish().unwrap();

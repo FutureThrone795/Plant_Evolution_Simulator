@@ -10,6 +10,10 @@ fn modify_self_property_helper(original_val: f32, change_factor: f32) -> f32 {
     return (original_val + (change_factor / 10.0).tanh()).tanh();
 }
 
+fn modify_self_length_property_helper(original_len: f32, change_factor: f32) -> f32 {
+    return 10.0 * modify_self_property_helper(original_len / 10.0, change_factor);
+}
+
 impl Plant {
     pub fn execute_branch_recursive(&mut self, homeostasis: &mut f32, branch_index: usize, growth_priority_heap: &mut BinaryHeap<GrowthPriorityItem>, depth: usize, terrain: &Terrain) {
         *homeostasis += self.branches[branch_index].calculate_homeostasis();

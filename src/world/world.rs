@@ -17,8 +17,8 @@ impl World {
         };
     }
 
-    pub fn tick(&mut self, delta_time: f64, total_time: f64) {
-        self.terrain.water_height = (total_time * 0.1).sin() as f32 * 5.0 + (total_time * 0.0271).sin() as f32 * 5.0;
+    pub fn tick(&mut self, delta_time: f64, total_ticks: u64) {
+        self.terrain.water_height = (total_ticks as f32 * 0.1).sin() as f32 * 5.0 + (total_ticks as f32 * 0.0271).sin() as f32 * 5.0;
 
         self.plants.tick(&self.terrain);
     }
