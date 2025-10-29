@@ -136,7 +136,7 @@ impl PlantGenome {
             rules: vec![
                 GenomeRule {
                     req: RuleReq::BranchDepthReq,
-                    min: 7.5,
+                    min: 6.5,
                     max: 10.0,
                     outcome: RuleOutcome::Exit
                 },
@@ -149,7 +149,7 @@ impl PlantGenome {
                 GenomeRule {
                     req: RuleReq::BranchDepthReq,
                     min: -1.0,
-                    max: 5.5,
+                    max: 4.5,
                     outcome: RuleOutcome::RequestNewOffshoot { 
                         priority: 10.0,
                         placement_straightness: 0.5, 
@@ -161,7 +161,7 @@ impl PlantGenome {
                 },
                 GenomeRule {
                     req: RuleReq::BranchDepthReq,
-                    min: 5.5,
+                    min: 4.5,
                     max: 10.0,
                     outcome: RuleOutcome::RequestNewOffshoot { 
                         priority: 5.0, 
@@ -181,7 +181,7 @@ impl PlantGenome {
                 GenomeRule {
                     req: RuleReq::BranchDepthReq,
                     min: -1.0,
-                    max: 4.0,
+                    max: 3.0,
                     outcome: RuleOutcome::ChangeSelfProperty { 
                         strength_factor: 1.0, 
                         photoreceptiveness_factor: -1.0, 

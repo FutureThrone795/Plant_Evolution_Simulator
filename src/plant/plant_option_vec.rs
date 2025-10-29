@@ -82,7 +82,7 @@ impl PlantOptionVec {
                 None => ()
             }
 
-            i += 1;
+            i += PLANT_TICK_MOD;
         }
 
         if is_plant_deleted {

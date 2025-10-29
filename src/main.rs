@@ -108,8 +108,26 @@ fn main() {
                                     1000.0, 
                                     &world.terrain
                                 );
-                                println!("New plant created at {:?} with camera position {:?}", new_plant.root_position, camera.position);
                                 world.plants.add_plant(new_plant);
+                            }
+                        },glium::winit::keyboard::PhysicalKey::Code(glium::winit::keyboard::KeyCode::KeyR) => {
+                            if event.state.is_pressed() {
+                                for _i in 0..100 {
+                                    let (x, z) = (rand::random_range(0.0 .. terrain::TERRAIN_GRID_ROWS as f32), rand::random_range(0.0 .. terrain::TERRAIN_GRID_ROWS as f32));
+
+                                    if world.terrain.get_height(x, z) < world.terrain.water_height {
+                                        continue;
+                                    }
+
+                                    let new_plant = plant::Plant::new(
+                                        PlantGenome::human_made_tree_genome(), 
+                                        x,
+                                        z,
+                                        1000.0, 
+                                        &world.terrain
+                                    );
+                                    world.plants.add_plant(new_plant);
+                                }
                             }
                         },
                         _ => {
