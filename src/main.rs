@@ -96,7 +96,7 @@ fn main() {
                         },
                         glium::winit::keyboard::PhysicalKey::Code(glium::winit::keyboard::KeyCode::KeyP) => {
                             if event.state.is_pressed() {
-                                println!("{:?}", world.plants);
+                                println!("Number of concurrent Plants: {}", world.plants.internal_vec.len());
                             }
                         },
                         glium::winit::keyboard::PhysicalKey::Code(glium::winit::keyboard::KeyCode::KeyK) => {
