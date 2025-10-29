@@ -27,7 +27,9 @@ impl Plant {
 
         plant_vertices: &mut Vec<Vertex>,
         plant_indices: &mut Vec<u32>,
-        matrix: Mat4
+        matrix: Mat4,
+
+        is_ldm: bool
     ) {
         *homeostasis += self.branches[branch_index].calculate_homeostasis();
 
@@ -45,7 +47,7 @@ impl Plant {
                                               Mat4::translation(0.0, branch_connection.along_length * branch_length_real, 0.0) * 
                                               matrix.clone();
 
-                self.execute_branch_and_update_model_recursive(homeostasis, branch_connection.branch_index, growth_priority_heap, depth + 1, terrain, plant_vertices, plant_indices, offshoot_1_matrix);
+                self.execute_branch_and_update_model_recursive(homeostasis, branch_connection.branch_index, growth_priority_heap, depth + 1, terrain, plant_vertices, plant_indices, offshoot_1_matrix, is_ldm);
             },
             None => ()
         }
@@ -56,12 +58,12 @@ impl Plant {
                                               Mat4::translation(0.0, branch_connection.along_length * branch_length_real, 0.0) * 
                                               matrix.clone();
 
-                self.execute_branch_and_update_model_recursive(homeostasis, branch_connection.branch_index, growth_priority_heap, depth + 1, terrain, plant_vertices, plant_indices, offshoot_2_matrix);
+                self.execute_branch_and_update_model_recursive(homeostasis, branch_connection.branch_index, growth_priority_heap, depth + 1, terrain, plant_vertices, plant_indices, offshoot_2_matrix, is_ldm);
             },
             None => ()
         }
         
-        self.render_branch(branch_index, plant_vertices, plant_indices, matrix);
+        self.render_branch(branch_index, plant_vertices, plant_indices, matrix, is_ldm);
     }   
 
     fn execute_branch_genome(&mut self, branch_index: usize, growth_priority_heap: &mut BinaryHeap<GrowthPriorityItem>, depth: usize, terrain: &Terrain) {

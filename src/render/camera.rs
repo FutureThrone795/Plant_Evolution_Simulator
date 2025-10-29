@@ -65,31 +65,25 @@ impl CameraState {
         let right = normalize(cross(WORLD_UP, f));
         let camera_up = cross(f, right);
 
-        let s = (f.1 * camera_up.2 - f.2 * camera_up.1,
-                 f.2 * camera_up.0 - f.0 * camera_up.2,
-                 f.0 * camera_up.1 - f.1 * camera_up.0);
+        let s = cross(f, camera_up);
 
-        let s_norm = {
-            let len = s.0 * s.0 + s.1 * s.1 + s.2 * s.2;
-            let len = len.sqrt();
-            (s.0 / len, s.1 / len, s.2 / len)
-        };
+        let s_norm = normalize(s);
 
-        let u = (s_norm.1 * f.2 - s_norm.2 * f.1,
-                 s_norm.2 * f.0 - s_norm.0 * f.2,
-                 s_norm.0 * f.1 - s_norm.1 * f.0);
+        let u = cross(s_norm, f);
 
-        let p = (-self.position.0 * s.0 - self.position.1 * s.1 - self.position.2 * s.2,
-                 -self.position.0 * u.0 - self.position.1 * u.1 - self.position.2 * u.2,
-                 -self.position.0 * f.0 - self.position.1 * f.1 - self.position.2 * f.2);
+        let p = (
+            -dot(self.position, s),
+            -dot(self.position, u),
+            -dot(self.position, f),
+        );
 
         // note: remember that this is column-major, so the lines of code are actually columns
-        [
+        return [
             [s_norm.0, u.0, f.0, 0.0],
             [s_norm.1, u.1, f.1, 0.0],
             [s_norm.2, u.2, f.2, 0.0],
             [p.0     , p.1, p.2, 1.0],
-        ]
+        ];
     }
 
     pub fn update(&mut self, delta_time: f32, world: &World) {

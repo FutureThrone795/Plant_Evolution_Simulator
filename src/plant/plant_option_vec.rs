@@ -1,7 +1,9 @@
 use std::fmt::{Debug, Formatter};
 
 use crate::plant::Plant;
-use crate::terrain::Terrain;
+use crate::terrain::{Terrain, TERRAIN_CELL_WIDTH};
+
+use crate::render::vector_math;
 
 use glium::{DrawParameters};
 use crate::render::camera::CameraState;
@@ -50,9 +52,9 @@ impl PlantOptionVec {
         };
     }
 
-    pub fn tick(&mut self, terrain: &Terrain, total_ticks: u64, display: &glium::backend::glutin::Display<glium::glutin::surface::WindowSurface>) {
+    pub fn tick(&mut self, terrain: &Terrain, total_ticks: u64, display: &glium::backend::glutin::Display<glium::glutin::surface::WindowSurface>, camera: &CameraState) {
         let mut is_plant_deleted = false;
-        static PLANT_TICK_MOD: u64 = 10;
+        static PLANT_TICK_MOD: u64 = 200;
 
         let mut i = total_ticks.rem_euclid(PLANT_TICK_MOD);
         while i < self.internal_vec.len() as u64 {
@@ -60,7 +62,9 @@ impl PlantOptionVec {
             
             match item {
                 Some(plant) => {
-                    if !plant.tick(terrain, display) {
+                    let is_ldm = vector_math::len_xz(vector_math::difference(plant.root_position, vector_math::scalar_multiple(1.0 / TERRAIN_CELL_WIDTH, camera.position))) > 15.0;
+
+                    if !plant.tick(terrain, display, is_ldm) {
                         //Delete from internal vector if it returns false
                         *item = None;
                         is_plant_deleted = true;

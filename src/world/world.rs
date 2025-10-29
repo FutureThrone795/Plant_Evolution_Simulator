@@ -17,10 +17,10 @@ impl World {
         };
     }
 
-    pub fn tick(&mut self, total_ticks: u64, display: &glium::backend::glutin::Display<glium::glutin::surface::WindowSurface>) {
+    pub fn tick(&mut self, total_ticks: u64, display: &glium::backend::glutin::Display<glium::glutin::surface::WindowSurface>, camera: &CameraState) {
         self.terrain.water_height = (total_ticks as f32 * 0.1).sin() as f32 * 5.0 + (total_ticks as f32 * 0.0271).sin() as f32 * 5.0;
 
-        self.plants.tick(&self.terrain, total_ticks, display);
+        self.plants.tick(&self.terrain, total_ticks, display, camera);
     }
 
     pub fn render(

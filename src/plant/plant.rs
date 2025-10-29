@@ -34,7 +34,7 @@ impl Debug for Plant {
 }
 
 impl Plant {
-    pub fn tick(&mut self, terrain: &Terrain, display: &glium::backend::glutin::Display<glium::glutin::surface::WindowSurface>,) -> bool {
+    pub fn tick(&mut self, terrain: &Terrain, display: &glium::backend::glutin::Display<glium::glutin::surface::WindowSurface>, is_ldm: bool) -> bool {
         //Returns false when the plant has died and should be removed
 
         self.age_ticks += 1;
@@ -42,14 +42,12 @@ impl Plant {
         let mut homeostasis: f32 = 2.0;
         let mut growth_priority_heap: BinaryHeap<GrowthPriorityItem> = BinaryHeap::new();
 
-
-
         let matrix = Mat4::identity();
 
         let mut vertices: Vec<Vertex> = vec![];
         let mut indices: Vec<u32> = vec![];
 
-        self.execute_branch_and_update_model_recursive(&mut homeostasis, 0, &mut growth_priority_heap, 0, terrain, &mut vertices, &mut indices, matrix);
+        self.execute_branch_and_update_model_recursive(&mut homeostasis, 0, &mut growth_priority_heap, 0, terrain, &mut vertices, &mut indices, matrix, is_ldm);
 
         self.cached_model = Some((
             glium::VertexBuffer::new(display, &vertices).unwrap(), 

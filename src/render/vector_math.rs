@@ -1,7 +1,23 @@
 pub fn normalize(v: (f32, f32, f32)) -> (f32, f32, f32) {
-    let len = (v.0*v.0 + v.1*v.1 + v.2*v.2).sqrt();
+    let len = len(v);
     if len == 0.0 { return v; }
     return (v.0/len, v.1/len, v.2/len)
+}
+
+pub fn scalar_multiple(s: f32, v: (f32, f32, f32)) -> (f32, f32, f32) {
+    return (v.0 * s, v.1 * s, v.2 * s);
+}
+
+pub fn difference(a: (f32, f32, f32), b: (f32, f32, f32)) -> (f32, f32, f32) {
+    return (a.0 - b.0, a.1 - b.1, a.2 - b.2);
+}
+
+pub fn len(v: (f32, f32, f32)) -> f32 {
+    return (v.0*v.0 + v.1*v.1 + v.2*v.2).sqrt();
+}
+
+pub fn len_xz(v: (f32, f32, f32)) -> f32 {
+    return (v.0*v.0 + v.2*v.2).sqrt();
 }
 
 pub fn cross(a: (f32, f32, f32), b: (f32, f32, f32)) -> (f32, f32, f32) {
