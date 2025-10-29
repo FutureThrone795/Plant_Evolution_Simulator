@@ -50,25 +50,29 @@ impl PlantOptionVec {
         };
     }
 
-    pub fn tick(&mut self, terrain: &Terrain) {
+    pub fn tick(&mut self, terrain: &Terrain, total_ticks: u64, display: &glium::backend::glutin::Display<glium::glutin::surface::WindowSurface>) {
         let mut is_plant_deleted = false;
+        static PLANT_TICK_MOD: u64 = 10;
 
-        for (i, item) in self.internal_vec.iter_mut().enumerate() {
+        let mut i = total_ticks.rem_euclid(PLANT_TICK_MOD);
+        while i < self.internal_vec.len() as u64 {
+            let item = &mut self.internal_vec[i as usize];
+            
             match item {
                 Some(plant) => {
-                    if !plant.tick(terrain) {
+                    if !plant.tick(terrain, display) {
                         //Delete from internal vector if it returns false
                         *item = None;
                         is_plant_deleted = true;
 
                         match self.first_none {
                             Some(index) => {
-                                if i < index {
-                                    self.first_none = Some(i)
+                                if i < index as u64 {
+                                    self.first_none = Some(i as usize)
                                 }
                             },
                             None => {
-                                self.first_none = Some(i);
+                                self.first_none = Some(i as usize);
                             }
                         }
 
@@ -77,6 +81,8 @@ impl PlantOptionVec {
                 },
                 None => ()
             }
+
+            i += 1;
         }
 
         if is_plant_deleted {

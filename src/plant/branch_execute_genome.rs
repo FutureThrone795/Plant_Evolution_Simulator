@@ -1,9 +1,12 @@
-use crate::plant::Plant;
+use crate::plant::{self, Plant, branch};
 use crate::plant::genome::{OffshootSelection, RuleOutcome};
 use crate::terrain::Terrain;
 
 use std::collections::BinaryHeap;
 use crate::plant::growth_priority_item::GrowthPriorityItem;
+
+use crate::render::Vertex;
+use crate::render::mat4_def::Mat4;
 
 fn modify_self_property_helper(original_val: f32, change_factor: f32) -> f32 {
     //Original val must be between 0.0 and 1.0, change factor changes this - positive go up, negative go down, kinda lmao its not a science idk go graph it yourself its weird
@@ -15,7 +18,17 @@ fn modify_self_length_property_helper(original_len: f32, change_factor: f32) -> 
 }
 
 impl Plant {
-    pub fn execute_branch_recursive(&mut self, homeostasis: &mut f32, branch_index: usize, growth_priority_heap: &mut BinaryHeap<GrowthPriorityItem>, depth: usize, terrain: &Terrain) {
+    pub fn execute_branch_and_update_model_recursive(
+        &mut self, homeostasis: &mut f32, 
+        branch_index: usize, 
+        growth_priority_heap: &mut BinaryHeap<GrowthPriorityItem>, 
+        depth: usize, 
+        terrain: &Terrain,
+
+        plant_vertices: &mut Vec<Vertex>,
+        plant_indices: &mut Vec<u32>,
+        matrix: Mat4
+    ) {
         *homeostasis += self.branches[branch_index].calculate_homeostasis();
 
         self.current_sunlight += self.branches[branch_index].calculate_collect_sunlight(depth);
@@ -23,19 +36,33 @@ impl Plant {
 
         self.execute_branch_genome(branch_index, growth_priority_heap, depth, terrain);
 
+        let branch_length_real = 1.0 + self.branches[branch_index].length * 10.0;
+
         match &self.branches[branch_index].offshoot_1 {
             Some(branch_connection) => {
-                self.execute_branch_recursive(homeostasis, branch_connection.branch_index, growth_priority_heap, depth + 1, terrain);
+                let offshoot_1_matrix = Mat4::rotation_y(branch_connection.yaw) * 
+                                              Mat4::rotation_x(branch_connection.pitch) * 
+                                              Mat4::translation(0.0, branch_connection.along_length * branch_length_real, 0.0) * 
+                                              matrix.clone();
+
+                self.execute_branch_and_update_model_recursive(homeostasis, branch_connection.branch_index, growth_priority_heap, depth + 1, terrain, plant_vertices, plant_indices, offshoot_1_matrix);
             },
             None => ()
         }
         match &self.branches[branch_index].offshoot_2 {
             Some(branch_connection) => {
-                self.execute_branch_recursive(homeostasis, branch_connection.branch_index, growth_priority_heap, depth + 1, terrain);
+                let offshoot_2_matrix = Mat4::rotation_y(branch_connection.yaw) * 
+                                              Mat4::rotation_x(branch_connection.pitch) * 
+                                              Mat4::translation(0.0, branch_connection.along_length * branch_length_real, 0.0) * 
+                                              matrix.clone();
+
+                self.execute_branch_and_update_model_recursive(homeostasis, branch_connection.branch_index, growth_priority_heap, depth + 1, terrain, plant_vertices, plant_indices, offshoot_2_matrix);
             },
             None => ()
         }
-    }
+        
+        self.render_branch(branch_index, plant_vertices, plant_indices, matrix);
+    }   
 
     fn execute_branch_genome(&mut self, branch_index: usize, growth_priority_heap: &mut BinaryHeap<GrowthPriorityItem>, depth: usize, terrain: &Terrain) {
         for genome_rule in &self.genome.rules {

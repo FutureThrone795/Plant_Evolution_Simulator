@@ -22,7 +22,9 @@ pub struct Plant {
     
     pub current_energy: f32,
     pub current_water: f32,
-    pub current_sunlight: f32
+    pub current_sunlight: f32,
+
+    pub cached_model: Option<(glium::VertexBuffer<Vertex>, glium::IndexBuffer<u32>)>
 }
 
 impl Debug for Plant {
@@ -32,18 +34,29 @@ impl Debug for Plant {
 }
 
 impl Plant {
-    pub fn tick(&mut self, terrain: &Terrain) -> bool {
+    pub fn tick(&mut self, terrain: &Terrain, display: &glium::backend::glutin::Display<glium::glutin::surface::WindowSurface>,) -> bool {
         //Returns false when the plant has died and should be removed
 
         self.age_ticks += 1;
-        if self.age_ticks > 100 {
-            return true;
-        }
 
         let mut homeostasis: f32 = 2.0;
         let mut growth_priority_heap: BinaryHeap<GrowthPriorityItem> = BinaryHeap::new();
 
-        self.execute_branch_recursive(&mut homeostasis, 0, &mut growth_priority_heap, 0, terrain);
+
+
+        let matrix = Mat4::identity();
+
+        let mut vertices: Vec<Vertex> = vec![];
+        let mut indices: Vec<u32> = vec![];
+
+        self.execute_branch_and_update_model_recursive(&mut homeostasis, 0, &mut growth_priority_heap, 0, terrain, &mut vertices, &mut indices, matrix);
+
+        self.cached_model = Some((
+            glium::VertexBuffer::new(display, &vertices).unwrap(), 
+            glium::IndexBuffer::new(display, glium::index::PrimitiveType::TrianglesList, &indices).unwrap()
+        ));
+
+
 
         if self.current_water > self.current_sunlight {
             self.current_energy += self.current_water;
@@ -101,23 +114,19 @@ impl Plant {
         camera: &CameraState,
         params: &DrawParameters
     ) {
-        let matrix = Mat4::identity();
+        match &self.cached_model {
+            Some((vertex_buffer, index_buffer)) => {
+                let uniforms = uniform! {
+                    view: camera.get_view(),
+                    perspective: camera.get_perspective().0,
+                    model: Mat4::translation(self.root_position.0 * TERRAIN_CELL_WIDTH, self.root_position.1, self.root_position.2 * TERRAIN_CELL_WIDTH).0
+                };
 
-        let mut vertices: Vec<Vertex> = vec![];
-        let mut indices: Vec<u32> = vec![];
-
-        self.render_branch_recursive(0, &mut vertices, &mut indices, matrix);
-
-        let vertex_buffer = glium::VertexBuffer::new(display, &vertices).unwrap();
-        let index_buffer = glium::IndexBuffer::new(display, glium::index::PrimitiveType::TrianglesList, &indices).unwrap();
-
-        let uniforms = uniform! {
-            view: camera.get_view(),
-            perspective: camera.get_perspective().0,
-            model: Mat4::translation(self.root_position.0 * TERRAIN_CELL_WIDTH, self.root_position.1, self.root_position.2 * TERRAIN_CELL_WIDTH).0
-        };
-
-        target.draw(&vertex_buffer, &index_buffer, program, &uniforms, params).unwrap();
+                target.draw(vertex_buffer, index_buffer, program, &uniforms, params).unwrap();
+            }
+            None => ()
+        }
+        
     }
 
     pub fn new (genome: PlantGenome, x: f32, z: f32, starting_energy: f32, terrain: &Terrain) -> Plant {
@@ -129,7 +138,9 @@ impl Plant {
             root_position: (x, terrain.get_height(x, z), z),
             current_energy: starting_energy,
             current_sunlight: 0.0,
-            current_water: 0.0
+            current_water: 0.0,
+
+            cached_model: None
         }
     }
 }

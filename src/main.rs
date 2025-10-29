@@ -79,7 +79,7 @@ fn main() {
                     // 20 ticks a second
                     if total_ticks < (total_time * 20.0) as u64 {
                         total_ticks += 1;
-                        world.tick(delta_time, total_ticks);
+                        world.tick(total_ticks, &display);
                     }
 
                     world.render(&mut target, &program, &display, &camera, &params);
