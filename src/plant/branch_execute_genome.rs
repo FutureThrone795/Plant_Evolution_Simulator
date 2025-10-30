@@ -1,9 +1,10 @@
-use crate::plant::{self, Plant, branch};
+use crate::plant::{Plant, plant::PLANT_MAX_BRANCH_COUNT};
 use crate::plant::genome::{OffshootSelection, RuleOutcome};
 use crate::terrain::Terrain;
 
 use std::collections::BinaryHeap;
 use crate::plant::growth_priority_item::GrowthPriorityItem;
+use crate::render::branch_model::PlantModelMode;
 
 use crate::render::Vertex;
 use crate::render::mat4_def::Mat4;
@@ -14,7 +15,7 @@ fn modify_self_property_helper(original_val: f32, change_factor: f32) -> f32 {
 }
 
 fn modify_self_length_property_helper(original_len: f32, change_factor: f32) -> f32 {
-    return 10.0 * modify_self_property_helper(original_len / 10.0, change_factor);
+    return modify_self_property_helper(original_len * 0.6, change_factor) / 0.6;
 }
 
 impl Plant {
@@ -29,7 +30,7 @@ impl Plant {
         plant_indices: &mut Vec<u32>,
         matrix: Mat4,
 
-        is_ldm: bool
+        model_mode: PlantModelMode
     ) {
         *homeostasis += self.branches[branch_index].calculate_homeostasis();
 
@@ -39,7 +40,6 @@ impl Plant {
         self.execute_branch_genome(branch_index, growth_priority_heap, depth, terrain);
 
         let branch_length_real = 1.0 + self.branches[branch_index].length * 10.0;
-
         match &self.branches[branch_index].offshoot_1 {
             Some(branch_connection) => {
                 let offshoot_1_matrix = Mat4::rotation_y(branch_connection.yaw) * 
@@ -47,7 +47,7 @@ impl Plant {
                                               Mat4::translation(0.0, branch_connection.along_length * branch_length_real, 0.0) * 
                                               matrix.clone();
 
-                self.execute_branch_and_update_model_recursive(homeostasis, branch_connection.branch_index, growth_priority_heap, depth + 1, terrain, plant_vertices, plant_indices, offshoot_1_matrix, is_ldm);
+                self.execute_branch_and_update_model_recursive(homeostasis, branch_connection.branch_index, growth_priority_heap, depth + 1, terrain, plant_vertices, plant_indices, offshoot_1_matrix, model_mode);
             },
             None => ()
         }
@@ -58,12 +58,19 @@ impl Plant {
                                               Mat4::translation(0.0, branch_connection.along_length * branch_length_real, 0.0) * 
                                               matrix.clone();
 
-                self.execute_branch_and_update_model_recursive(homeostasis, branch_connection.branch_index, growth_priority_heap, depth + 1, terrain, plant_vertices, plant_indices, offshoot_2_matrix, is_ldm);
+                self.execute_branch_and_update_model_recursive(homeostasis, branch_connection.branch_index, growth_priority_heap, depth + 1, terrain, plant_vertices, plant_indices, offshoot_2_matrix, model_mode);
             },
             None => ()
         }
         
-        self.render_branch(branch_index, plant_vertices, plant_indices, matrix, is_ldm);
+        match model_mode {
+            PlantModelMode::NoModelUpdate => {
+                return;
+            }
+            _ => {
+                self.push_branch_model(branch_index, plant_vertices, plant_indices, matrix, model_mode);
+            }
+        }
     }   
 
     fn execute_branch_genome(&mut self, branch_index: usize, growth_priority_heap: &mut BinaryHeap<GrowthPriorityItem>, depth: usize, terrain: &Terrain) {
@@ -130,7 +137,7 @@ impl Plant {
                         self.branches[branch_index].strength = modify_self_property_helper(self.branches[branch_index].strength, *strength_factor);
                         self.branches[branch_index].photoreceptiveness = modify_self_property_helper(self.branches[branch_index].photoreceptiveness, *photoreceptiveness_factor);
                         self.branches[branch_index].water_intake = modify_self_property_helper(self.branches[branch_index].water_intake, *water_intake_factor);
-                        self.branches[branch_index].length = modify_self_property_helper(self.branches[branch_index].length, *length_factor);
+                        self.branches[branch_index].length = modify_self_length_property_helper(self.branches[branch_index].length, *length_factor);
                         break;
                     },
 
@@ -144,7 +151,7 @@ impl Plant {
                         water_intake,
                         length,
                     } => {
-                        if self.branches[branch_index].offshoot_1.is_some() && self.branches[branch_index].offshoot_2.is_some() {
+                        if self.branches.len() > PLANT_MAX_BRANCH_COUNT || (self.branches[branch_index].offshoot_1.is_some() && self.branches[branch_index].offshoot_2.is_some()) {
                             // If a branch attempts to grow a new offshoot and fails, it exits the genome evaluation process
                             break;
                         }

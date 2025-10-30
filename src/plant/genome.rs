@@ -186,7 +186,7 @@ impl PlantGenome {
                         strength_factor: 1.0, 
                         photoreceptiveness_factor: -1.0, 
                         water_intake_factor: -1.0, 
-                        length_factor: 1.0 
+                        length_factor: 0.6 
                     }
                 }
             ] 

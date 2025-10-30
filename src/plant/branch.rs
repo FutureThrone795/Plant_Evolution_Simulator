@@ -1,5 +1,7 @@
 use std::f32::consts::PI;
 
+use rand::rng;
+
 use crate::plant::growth_priority_item::GrowthPriorityItem;
 use crate::rand::Rng;
 
@@ -37,10 +39,10 @@ pub struct Branch {
 impl Branch {
     pub fn new(strength: f32, photoreceptiveness: f32, water_intake: f32, length: f32) -> Branch {
         return Branch {
-            strength,
-            photoreceptiveness,
-            water_intake,
-            length,
+            strength: strength + rand::random_range(-0.1 .. 0.1),
+            photoreceptiveness: photoreceptiveness + rand::random_range(-0.1 .. 0.1),
+            water_intake: water_intake + rand::random_range(-0.1 .. 0.1),
+            length: length * rand::random_range(0.9 .. 1.1),
             offshoot_1: None,
             offshoot_2: None,
         }
@@ -87,13 +89,6 @@ impl Branch {
 
 impl From<&GrowthPriorityItem> for Branch {
     fn from(growth_priority_item: &GrowthPriorityItem) -> Branch { 
-        return Branch { 
-            strength: growth_priority_item.strength, 
-            photoreceptiveness: growth_priority_item.photoreceptiveness, 
-            water_intake: growth_priority_item.water_intake, 
-            length: growth_priority_item.length, 
-            offshoot_1: None, 
-            offshoot_2: None
-        }
+        return Branch::new(growth_priority_item.strength, growth_priority_item.photoreceptiveness, growth_priority_item.water_intake, growth_priority_item.length);
     }
 }

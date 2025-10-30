@@ -10,8 +10,11 @@ use crate::plant::growth_priority_item::GrowthPriorityItem;
 use crate::plant::genome::PlantGenome;
 use crate::plant::branch::{Branch, BranchConnection};
 use crate::render::Vertex;
+use crate::render::branch_model::PlantModelMode;
 
 use std::collections::BinaryHeap;
+
+pub const PLANT_MAX_BRANCH_COUNT: usize = 100;
 
 pub struct Plant {
     pub genome: PlantGenome,
@@ -34,7 +37,7 @@ impl Debug for Plant {
 }
 
 impl Plant {
-    pub fn tick(&mut self, terrain: &Terrain, display: &glium::backend::glutin::Display<glium::glutin::surface::WindowSurface>, is_ldm: bool) -> bool {
+    pub fn tick(&mut self, terrain: &Terrain, display: &glium::backend::glutin::Display<glium::glutin::surface::WindowSurface>, model_mode: PlantModelMode) -> bool {
         //Returns false when the plant has died and should be removed
 
         self.age_ticks += 1;
@@ -47,14 +50,23 @@ impl Plant {
         let mut vertices: Vec<Vertex> = vec![];
         let mut indices: Vec<u32> = vec![];
 
-        self.execute_branch_and_update_model_recursive(&mut homeostasis, 0, &mut growth_priority_heap, 0, terrain, &mut vertices, &mut indices, matrix, is_ldm);
+        self.execute_branch_and_update_model_recursive(&mut homeostasis, 0, &mut growth_priority_heap, 0, terrain, &mut vertices, &mut indices, matrix, model_mode);
 
-        self.cached_model = Some((
-            glium::VertexBuffer::new(display, &vertices).unwrap(), 
-            glium::IndexBuffer::new(display, glium::index::PrimitiveType::TrianglesList, &indices).unwrap()
-        ));
-
-
+        match model_mode {
+            PlantModelMode::NoModelUpdate => (),
+            PlantModelMode::Ldm | PlantModelMode::Normal => {
+                self.cached_model = Some((
+                    glium::VertexBuffer::new(display, &vertices).unwrap(), 
+                    glium::IndexBuffer::new(display, glium::index::PrimitiveType::TrianglesList, &indices).unwrap()
+                ));
+            },
+            PlantModelMode::SuperLdm => {
+                self.cached_model = Some((
+                    glium::VertexBuffer::new(display, &vertices).unwrap(), 
+                    glium::IndexBuffer::new(display, glium::index::PrimitiveType::LinesList, &indices).unwrap()
+                ));
+            }
+        }
 
         if self.current_water > self.current_sunlight {
             self.current_energy += self.current_water;
@@ -72,7 +84,7 @@ impl Plant {
             return false;
         }
 
-        while !growth_priority_heap.is_empty() && self.current_energy > self.genome.min_enegy_for_growth {
+        while !growth_priority_heap.is_empty() && self.branches.len() < PLANT_MAX_BRANCH_COUNT && self.current_energy > self.genome.min_enegy_for_growth {
             if self.current_energy - growth_priority_heap.peek().unwrap().cost() > self.genome.min_enegy_for_growth {
                 let growth_priority_item: GrowthPriorityItem = growth_priority_heap.pop().unwrap();
                 let new_index: usize = self.branches.len();

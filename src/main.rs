@@ -57,6 +57,8 @@ fn main() {
         },
         blend: glium::Blend::alpha_blending(),
         backface_culling: glium::BackfaceCullingMode::CullCounterClockwise,
+        line_width: Some(4.0),
+        
         .. Default::default()
     };
 
@@ -76,8 +78,8 @@ fn main() {
                     let mut target = display.draw();
                     target.clear_color_and_depth((0.60, 0.75, 0.95, 1.0), 1.0);
 
-                    // 20 ticks a second
-                    if total_ticks < (total_time * 200.0) as u64 {
+                    // 20 ticks per second
+                    while total_ticks < (total_time * 20.0) as u64 {
                         total_ticks += 1;
                         world.tick(total_ticks, &display, &camera);
                     }

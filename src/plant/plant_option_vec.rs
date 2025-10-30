@@ -1,6 +1,7 @@
 use std::fmt::{Debug, Formatter};
 
 use crate::plant::Plant;
+use crate::render::branch_model::PlantModelMode;
 use crate::terrain::{Terrain, TERRAIN_CELL_WIDTH};
 
 use crate::render::vector_math;
@@ -53,8 +54,7 @@ impl PlantOptionVec {
     }
 
     pub fn tick(&mut self, terrain: &Terrain, total_ticks: u64, display: &glium::backend::glutin::Display<glium::glutin::surface::WindowSurface>, camera: &CameraState) {
-        let mut is_plant_deleted = false;
-        static PLANT_TICK_MOD: u64 = 200;
+        const PLANT_TICK_MOD: u64 = 30;
 
         let mut i = total_ticks.rem_euclid(PLANT_TICK_MOD);
         while i < self.internal_vec.len() as u64 {
@@ -62,12 +62,25 @@ impl PlantOptionVec {
             
             match item {
                 Some(plant) => {
-                    let is_ldm = vector_math::len_xz(vector_math::difference(plant.root_position, vector_math::scalar_multiple(1.0 / TERRAIN_CELL_WIDTH, camera.position))) > 15.0;
+                    let dist_to_camera = vector_math::len_xz(vector_math::difference(plant.root_position, vector_math::scalar_multiple(1.0 / TERRAIN_CELL_WIDTH, camera.position)));
 
-                    if !plant.tick(terrain, display, is_ldm) {
+                    let model_mode: PlantModelMode;
+
+                    if dist_to_camera > 35.0 {
+                        if (total_ticks / (PLANT_TICK_MOD + 1)) & 4 == i & 4 {
+                            model_mode = PlantModelMode::SuperLdm;
+                        } else  {
+                            model_mode = PlantModelMode::NoModelUpdate;
+                        }
+                    } else if dist_to_camera > 15.0 {
+                        model_mode = PlantModelMode::Ldm;
+                    } else {
+                        model_mode = PlantModelMode::Normal;
+                    }
+
+                    if !plant.tick(terrain, display, model_mode) {
                         //Delete from internal vector if it returns false
                         *item = None;
-                        is_plant_deleted = true;
 
                         match self.first_none {
                             Some(index) => {
@@ -87,10 +100,6 @@ impl PlantOptionVec {
             }
 
             i += PLANT_TICK_MOD;
-        }
-
-        if is_plant_deleted {
-            println!("Plant deleted, new PlantOptionVec: {:?}", self.internal_vec);
         }
     }
 
