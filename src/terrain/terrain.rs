@@ -260,7 +260,9 @@ impl Terrain {
                 let uniforms = uniform! {
                     view: camera.get_view(),
                     perspective: camera.get_perspective().0,
-                    model: offset.0
+                    model: offset.0,
+
+                    is_plant: false
                 };
 
                 target.draw(&vertex_buffer, &index_buffer, program, &uniforms, params).unwrap();
@@ -272,7 +274,9 @@ impl Terrain {
                 let uniforms = uniform! {
                     view: camera.get_view(),
                     perspective: camera.get_perspective().0,
-                    model: offset.0
+                    model: offset.0,
+
+                    is_plant: false
                 };
 
                 target.draw(&water_vertex_buffer, &water_index_buffer, program, &uniforms, params).unwrap();

@@ -67,7 +67,7 @@ impl PlantOptionVec {
                     let model_mode: PlantModelMode;
 
                     if dist_to_camera > 35.0 {
-                        if (total_ticks / (PLANT_TICK_MOD + 1)) & 4 == i & 4 {
+                        if (total_ticks / (PLANT_TICK_MOD + 1)) & 8 == i & 8 {
                             model_mode = PlantModelMode::SuperLdm;
                         } else  {
                             model_mode = PlantModelMode::NoModelUpdate;
@@ -104,7 +104,8 @@ impl PlantOptionVec {
     }
 
     pub fn render(
-        &self, 
+        &self,  
+        total_time: f32,
         target: &mut glium::Frame, 
         program: &glium::Program, 
         display: &glium::backend::glutin::Display<glium::glutin::surface::WindowSurface>,
@@ -114,7 +115,7 @@ impl PlantOptionVec {
         for item in &self.internal_vec {
             match item {
                 Some(plant) => {
-                    plant.render(target, program, display, camera, params);
+                    plant.render(total_time, target, program, display, camera, params);
                 }
                 None => ()
             }

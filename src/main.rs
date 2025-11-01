@@ -3,6 +3,7 @@
 #[macro_use]
 extern crate glium;
 use glium::Surface;
+use glium::winit::dpi::LogicalSize;
 
 use std::time::Instant;
 use std::fs;
@@ -15,6 +16,8 @@ mod render;
 mod terrain;
 mod world;
 
+use crate::plant::Plant;
+use crate::render::vector_math;
 use crate::plant::genome::PlantGenome;
 use crate::world::World;
 use crate::render::camera::CameraState;
@@ -26,9 +29,10 @@ fn main() {
         .expect("event loop building");
     let (window, display) = glium::backend::glutin::SimpleWindowBuilder::new()
         .with_title("Plant Evolution Simulator")
+        .with_inner_size(1800, 1000)
         .build(&event_loop);
-
-    window.set_maximized(true);
+    
+    //window.set_maximized(true);
     window.set_cursor_grab(glium::winit::window::CursorGrabMode::Confined).ok();
     window.set_cursor_visible(false);
 
@@ -57,7 +61,7 @@ fn main() {
         },
         blend: glium::Blend::alpha_blending(),
         backface_culling: glium::BackfaceCullingMode::CullCounterClockwise,
-        line_width: Some(4.0),
+        //line_width: Some(4.0),
         
         .. Default::default()
     };
@@ -84,7 +88,7 @@ fn main() {
                         world.tick(total_ticks, &display, &camera);
                     }
 
-                    world.render(&mut target, &program, &display, &camera, &params);
+                    world.render(total_time as f32, &mut target, &program, &display, &camera, &params);
 
                     target.finish().unwrap();
                 },
@@ -98,7 +102,29 @@ fn main() {
                         },
                         glium::winit::keyboard::PhysicalKey::Code(glium::winit::keyboard::KeyCode::KeyP) => {
                             if event.state.is_pressed() {
-                                println!("Number of concurrent Plants: {}", world.plants.internal_vec.len());
+                                println!("\n\nNumber of concurrent Plants: {}", world.plants.internal_vec.len());
+
+                                let mut closest_plant_index: Option<&Plant> = None;
+                                let mut closest_plant_dist: Option<f32> = None;
+                                for i in &world.plants.internal_vec {
+                                    match i {
+                                        Some(plant) => {
+                                            let dist = vector_math::dist_xz(plant.root_position, vector_math::scalar_multiple(1.0 / TERRAIN_CELL_WIDTH, camera.position));
+                                            if closest_plant_index.is_none() || dist < closest_plant_dist.unwrap() {
+                                                closest_plant_index = Some(&plant);
+                                                closest_plant_dist = Some(dist);
+                                            }
+                                        }
+                                        None => ()
+                                    }
+                                }
+
+                                match closest_plant_index {
+                                    Some(plant) => {
+                                        println!("Nearest plant ({} units): ({:?})", closest_plant_dist.unwrap(), *plant);
+                                    }
+                                    None => ()
+                                }
                             }
                         },
                         glium::winit::keyboard::PhysicalKey::Code(glium::winit::keyboard::KeyCode::KeyK) => {
@@ -107,7 +133,7 @@ fn main() {
                                     PlantGenome::human_made_tree_genome(), 
                                     camera.position.0 / TERRAIN_CELL_WIDTH, 
                                     camera.position.2 / TERRAIN_CELL_WIDTH, 
-                                    1000.0, 
+                                    100.0, 
                                     &world.terrain
                                 );
                                 world.plants.add_plant(new_plant);
@@ -125,7 +151,7 @@ fn main() {
                                         PlantGenome::human_made_tree_genome(), 
                                         x,
                                         z,
-                                        1000.0, 
+                                        100.0, 
                                         &world.terrain
                                     );
                                     world.plants.add_plant(new_plant);

@@ -28,6 +28,7 @@ enum RuleReq {
     PlantEnergyReq,
     PlantWaterReq,
     PlantSunlightReq,
+    PlantBranchReq,
 
     TerrainHeightReq,
     TerrainDrynessReq,
@@ -39,7 +40,8 @@ pub enum RuleOutcome {
     Exit,
     //JumpToRule(usize), //Removed for concerns of infinite loops
     KillOffshoot(OffshootSelection),
-    ChangeSelfProperty{
+    RequestModifyBranch{
+        priority: f32,
         strength_factor: f32, 
         photoreceptiveness_factor: f32, 
         water_intake_factor: f32,
@@ -74,6 +76,7 @@ impl GenomeRule {
             RuleReq::PlantEnergyReq => plant.current_energy,
             RuleReq::PlantWaterReq => plant.current_water,
             RuleReq::PlantSunlightReq => plant.current_sunlight,
+            RuleReq::PlantBranchReq => plant.branches.len() as f32,
 
             RuleReq::TerrainHeightReq => plant.root_position.1,
             RuleReq::TerrainDrynessReq => 0.0,
@@ -99,7 +102,7 @@ impl GenomeRule {
 
 pub struct PlantGenome {
     pub min_enegy_for_growth: f32,
-    pub make_baby_req_energy: f32,
+    pub baby_energy: f32,
 
     pub sapling_strength: f32,
     pub sapling_photoreceptiveness: f32,
@@ -113,7 +116,7 @@ impl PlantGenome {
     pub fn random() -> PlantGenome {
         return PlantGenome { 
             min_enegy_for_growth: 10.0, 
-            make_baby_req_energy: 100.0, 
+            baby_energy: 100.0, 
 
             sapling_strength: 0.0, 
             sapling_photoreceptiveness: 0.0, 
@@ -125,8 +128,8 @@ impl PlantGenome {
     }
     pub fn human_made_tree_genome() -> PlantGenome {
         return PlantGenome { 
-            min_enegy_for_growth: 10.0, 
-            make_baby_req_energy: 100.0, 
+            min_enegy_for_growth: 34.0, 
+            baby_energy: 50.0, 
 
             sapling_strength: 0.3, 
             sapling_photoreceptiveness: 0.9, 
@@ -143,7 +146,7 @@ impl PlantGenome {
                 GenomeRule {
                     req: RuleReq::PlantEnergyReq,
                     min: -1.0,
-                    max: 5.0,
+                    max: 15.0,
                     outcome: RuleOutcome::Exit
                 },
                 GenomeRule {
@@ -154,7 +157,7 @@ impl PlantGenome {
                         priority: 10.0,
                         placement_straightness: 0.5, 
                         strength: 0.3,
-                        photoreceptiveness: 0.9,
+                        photoreceptiveness: 1.0,
                         water_intake: 0.5,
                         length: 0.3,
                     }
@@ -173,20 +176,33 @@ impl PlantGenome {
                     }
                 },
                 GenomeRule {
-                    req: RuleReq::PlantEnergyReq,
-                    min: -1.0,
-                    max: 10.0,
+                    req: RuleReq::BranchDepthReq,
+                    min: 1.5,
+                    max: 99.0,
                     outcome: RuleOutcome::Exit
                 },
                 GenomeRule {
-                    req: RuleReq::BranchDepthReq,
-                    min: -1.0,
-                    max: 3.0,
-                    outcome: RuleOutcome::ChangeSelfProperty { 
-                        strength_factor: 1.0, 
+                    req: RuleReq::PlantBranchReq,
+                    min: 11.5,
+                    max: 99.0,
+                    outcome: RuleOutcome::RequestModifyBranch { 
+                        strength_factor: 0.5, 
                         photoreceptiveness_factor: -1.0, 
-                        water_intake_factor: -1.0, 
-                        length_factor: 0.6 
+                        water_intake_factor: 0.4, 
+                        length_factor: 0.8,
+                        priority: 2.5
+                    }
+                },
+                GenomeRule {
+                    req: RuleReq::PlantWaterReq,
+                    min: 0.0,
+                    max: 30.0,
+                    outcome: RuleOutcome::RequestModifyBranch { 
+                        strength_factor: 0.2, 
+                        photoreceptiveness_factor: -0.3, 
+                        water_intake_factor: 1.0, 
+                        length_factor: 0.8,
+                        priority: 2.5
                     }
                 }
             ] 

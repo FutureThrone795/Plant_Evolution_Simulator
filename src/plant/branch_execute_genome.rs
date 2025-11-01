@@ -1,3 +1,5 @@
+use rand::random_range;
+
 use crate::plant::{Plant, plant::PLANT_MAX_BRANCH_COUNT};
 use crate::plant::genome::{OffshootSelection, RuleOutcome};
 use crate::terrain::Terrain;
@@ -8,15 +10,6 @@ use crate::render::branch_model::PlantModelMode;
 
 use crate::render::Vertex;
 use crate::render::mat4_def::Mat4;
-
-fn modify_self_property_helper(original_val: f32, change_factor: f32) -> f32 {
-    //Original val must be between 0.0 and 1.0, change factor changes this - positive go up, negative go down, kinda lmao its not a science idk go graph it yourself its weird
-    return (original_val + (change_factor / 10.0).tanh()).tanh();
-}
-
-fn modify_self_length_property_helper(original_len: f32, change_factor: f32) -> f32 {
-    return modify_self_property_helper(original_len * 0.6, change_factor) / 0.6;
-}
 
 impl Plant {
     pub fn execute_branch_and_update_model_recursive(
@@ -128,16 +121,21 @@ impl Plant {
 
 
 
-                    RuleOutcome::ChangeSelfProperty { 
+                    RuleOutcome::RequestModifyBranch { 
                         strength_factor, 
                         photoreceptiveness_factor, 
                         water_intake_factor, 
-                        length_factor 
+                        length_factor,
+                        priority
                     } => {
-                        self.branches[branch_index].strength = modify_self_property_helper(self.branches[branch_index].strength, *strength_factor);
-                        self.branches[branch_index].photoreceptiveness = modify_self_property_helper(self.branches[branch_index].photoreceptiveness, *photoreceptiveness_factor);
-                        self.branches[branch_index].water_intake = modify_self_property_helper(self.branches[branch_index].water_intake, *water_intake_factor);
-                        self.branches[branch_index].length = modify_self_length_property_helper(self.branches[branch_index].length, *length_factor);
+                        growth_priority_heap.push(GrowthPriorityItem::new_modify_branch_request(
+                            branch_index, 
+                            *strength_factor, 
+                            *photoreceptiveness_factor, 
+                            *water_intake_factor, 
+                            *length_factor, 
+                            *priority + random_range(-1.0 .. 1.0)
+                        ));
                         break;
                     },
 
@@ -152,10 +150,18 @@ impl Plant {
                         length,
                     } => {
                         if self.branches.len() > PLANT_MAX_BRANCH_COUNT || (self.branches[branch_index].offshoot_1.is_some() && self.branches[branch_index].offshoot_2.is_some()) {
-                            // If a branch attempts to grow a new offshoot and fails, it exits the genome evaluation process
-                            break;
+                            continue;
                         }
-                        growth_priority_heap.push(GrowthPriorityItem::new(branch_index, *placement_straightness, *strength, *photoreceptiveness, *water_intake, *length, *priority));
+                        growth_priority_heap.push(GrowthPriorityItem::new_offshoot_request(
+                            branch_index, 
+                            *placement_straightness, 
+                            *strength, 
+                            *photoreceptiveness, 
+                            *water_intake, 
+                            *length, 
+                            *priority + random_range(-1.0 .. 1.0)
+                        ));
+                        break;
                     }
 
                     /////////////////////////////////////////////////////////////////////////////////////////////////////

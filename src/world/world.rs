@@ -25,13 +25,14 @@ impl World {
 
     pub fn render(
         &self, 
+        total_time: f32,
         target: &mut glium::Frame, 
         program: &glium::Program, 
         display: &glium::backend::glutin::Display<glium::glutin::surface::WindowSurface>,
         camera: &CameraState,
         params: &DrawParameters
     ) {
-        self.plants.render(target, program, display, camera, params);
+        self.plants.render(total_time, target, program, display, camera, params);
 
         self.terrain.render(target, program, display, camera, params);
     }

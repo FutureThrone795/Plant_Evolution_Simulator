@@ -8,12 +8,20 @@ pub fn scalar_multiple(s: f32, v: (f32, f32, f32)) -> (f32, f32, f32) {
     return (v.0 * s, v.1 * s, v.2 * s);
 }
 
+pub fn dist(a: (f32, f32, f32), b: (f32, f32, f32)) -> f32 {
+    return len(difference(a, b));
+}
+
 pub fn difference(a: (f32, f32, f32), b: (f32, f32, f32)) -> (f32, f32, f32) {
     return (a.0 - b.0, a.1 - b.1, a.2 - b.2);
 }
 
 pub fn len(v: (f32, f32, f32)) -> f32 {
     return (v.0*v.0 + v.1*v.1 + v.2*v.2).sqrt();
+}
+
+pub fn dist_xz(a: (f32, f32, f32), b: (f32, f32, f32)) -> f32 {
+    return len_xz(difference(a, b));
 }
 
 pub fn len_xz(v: (f32, f32, f32)) -> f32 {

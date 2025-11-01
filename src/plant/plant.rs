@@ -11,6 +11,7 @@ use crate::plant::genome::PlantGenome;
 use crate::plant::branch::{Branch, BranchConnection};
 use crate::render::Vertex;
 use crate::render::branch_model::PlantModelMode;
+use crate::plant::growth_priority_item::PriorityItemType::{NewOffshoot, ModifyBranch};
 
 use std::collections::BinaryHeap;
 
@@ -32,7 +33,7 @@ pub struct Plant {
 
 impl Debug for Plant {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), std::fmt::Error> { 
-        return write!(f, "Plant: (Branch count: {:?}, Energy: {})", self.branches.len(), self.current_energy)
+        return write!(f, "Plant: (Branch count: {:?}, Energy: {}, Water: {}, Sun: {})", self.branches.len(), self.current_energy, self.current_water, self.current_sunlight);
     }
 }
 
@@ -68,7 +69,7 @@ impl Plant {
             }
         }
 
-        if self.current_water > self.current_sunlight {
+        if self.current_water < self.current_sunlight {
             self.current_energy += self.current_water;
             self.current_sunlight -= self.current_water;
             self.current_water = 0.0;
@@ -85,14 +86,12 @@ impl Plant {
         }
 
         while !growth_priority_heap.is_empty() && self.branches.len() < PLANT_MAX_BRANCH_COUNT && self.current_energy > self.genome.min_enegy_for_growth {
-            if self.current_energy - growth_priority_heap.peek().unwrap().cost() > self.genome.min_enegy_for_growth {
-                let growth_priority_item: GrowthPriorityItem = growth_priority_heap.pop().unwrap();
-                let new_index: usize = self.branches.len();
-                let new_offshoot = BranchConnection::new(&growth_priority_item, new_index);
-                
-                self.branches.push(Branch::from(&growth_priority_item));
-                self.branches[growth_priority_item.parent_branch_index].add_offshoot(new_offshoot);
-            } else {
+            let growth_priority_item: GrowthPriorityItem = growth_priority_heap.pop().unwrap();
+
+            if !self.execute_growth_priority_item(&growth_priority_item) {
+                // Executes when the growth priority item didn't execute because the plant didn't have enough energy 
+                // (for example, the new offshoot would result in the plant instantly dying)
+
                 break;
             }
         }
@@ -118,6 +117,7 @@ impl Plant {
 
     pub fn render(
         &self, 
+        total_time: f32,
         target: &mut glium::Frame, 
         program: &glium::Program, 
         display: &glium::backend::glutin::Display<glium::glutin::surface::WindowSurface>,
@@ -129,7 +129,10 @@ impl Plant {
                 let uniforms = uniform! {
                     view: camera.get_view(),
                     perspective: camera.get_perspective().0,
-                    model: Mat4::translation(self.root_position.0 * TERRAIN_CELL_WIDTH, self.root_position.1, self.root_position.2 * TERRAIN_CELL_WIDTH).0
+                    model: Mat4::translation(self.root_position.0 * TERRAIN_CELL_WIDTH, self.root_position.1, self.root_position.2 * TERRAIN_CELL_WIDTH).0,
+
+                    is_plant: true,
+                    total_time: total_time
                 };
 
                 target.draw(vertex_buffer, index_buffer, program, &uniforms, params).unwrap();
