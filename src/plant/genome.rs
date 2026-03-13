@@ -1,4 +1,6 @@
-use std::rc::Rc;
+use rand::seq::IteratorRandom;
+use strum::IntoEnumIterator;
+use strum_macros::EnumIter;
 
 use crate::plant::branch::Branch;
 use crate::plant::Plant;
@@ -6,19 +8,15 @@ use crate::terrain::Terrain;
 
 use crate::rand::Rng;
 
-const MAX_GENOME_RULE_COUNT: usize = 8;
-
-struct GenomeVal {
-    val: f32,
-    rand_factor: f32
-}
+pub const MAX_GENOME_RULE_COUNT: usize = 8;
 
 pub enum OffshootSelection {
     One,
     Two
 }
 
-enum RuleReq {
+#[derive(EnumIter)]
+pub enum RuleReq {
     BranchDepthReq,
     BranchStrengthReq,
     BranchPhotoreceptivenessReq,
@@ -36,9 +34,14 @@ enum RuleReq {
     TerrainWaterlog
 }
 
+impl RuleReq {
+    pub fn random() -> RuleReq {
+        return RuleReq::iter().choose(&mut rand::rng()).expect("Random RuleReq selection returned None in RuleReq::random()");
+    }
+}
+
 pub enum RuleOutcome {
     Exit,
-    //JumpToRule(usize), //Removed for concerns of infinite loops
     KillOffshoot(OffshootSelection),
     RequestModifyBranch{
         priority: f32,
@@ -49,7 +52,12 @@ pub enum RuleOutcome {
     },
     RequestNewOffshoot{
         priority: f32,
-        placement_straightness: f32,
+        
+        placement_upness: f32,
+        placement_rightness: f32,
+        placement_forwardness: f32,
+        placement_randomness: f32,
+
         strength: f32,
         photoreceptiveness: f32,
         water_intake: f32,
@@ -58,10 +66,10 @@ pub enum RuleOutcome {
 }
 
 pub struct GenomeRule {
-    req: RuleReq,
-    min: f32,
-    max: f32,
-    outcome: RuleOutcome
+    pub req: RuleReq,
+    pub min: f32,
+    pub max: f32,
+    pub outcome: RuleOutcome
 }
 
 impl GenomeRule {
@@ -79,9 +87,9 @@ impl GenomeRule {
             RuleReq::PlantBranchReq => plant.branches.len() as f32,
 
             RuleReq::TerrainHeightReq => plant.root_position.1,
-            RuleReq::TerrainDrynessReq => 0.0,
-            RuleReq::TerrainRockinessReq => 0.0,
-            RuleReq::TerrainWaterlog => 0.0
+            RuleReq::TerrainDrynessReq => terrain.get_dryness(plant.root_position.0, plant.root_position.2),
+            RuleReq::TerrainRockinessReq => terrain.get_rockiness(plant.root_position.0, plant.root_position.2),
+            RuleReq::TerrainWaterlog => todo!()
         };
 
         if self.min <= comp_val && comp_val <= self.max {
@@ -128,12 +136,12 @@ impl PlantGenome {
     }
     pub fn human_made_tree_genome() -> PlantGenome {
         return PlantGenome { 
-            min_enegy_for_growth: 34.0, 
-            baby_energy: 50.0, 
+            min_enegy_for_growth: 10.0, 
+            baby_energy: 80.0, 
 
             sapling_strength: 0.3, 
             sapling_photoreceptiveness: 0.9, 
-            sapling_water_intake: 0.5, 
+            sapling_water_intake: 0.8, 
             sapling_length: 0.5,
 
             rules: vec![
@@ -144,18 +152,17 @@ impl PlantGenome {
                     outcome: RuleOutcome::Exit
                 },
                 GenomeRule {
-                    req: RuleReq::PlantEnergyReq,
-                    min: -1.0,
-                    max: 15.0,
-                    outcome: RuleOutcome::Exit
-                },
-                GenomeRule {
                     req: RuleReq::BranchDepthReq,
                     min: -1.0,
                     max: 4.5,
                     outcome: RuleOutcome::RequestNewOffshoot { 
                         priority: 10.0,
-                        placement_straightness: 0.5, 
+
+                        placement_upness: 0.0,
+                        placement_rightness: 0.0,
+                        placement_forwardness: 1.0,
+                        placement_randomness: 0.1, 
+
                         strength: 0.3,
                         photoreceptiveness: 1.0,
                         water_intake: 0.5,
@@ -168,7 +175,12 @@ impl PlantGenome {
                     max: 10.0,
                     outcome: RuleOutcome::RequestNewOffshoot { 
                         priority: 5.0, 
-                        placement_straightness: 0.0,
+                        
+                        placement_upness: 0.1,
+                        placement_rightness: 0.0,
+                        placement_forwardness: 0.5,
+                        placement_randomness: 1.0,
+
                         strength: 0.1,
                         photoreceptiveness: 1.0,
                         water_intake: 0.1,
@@ -177,20 +189,20 @@ impl PlantGenome {
                 },
                 GenomeRule {
                     req: RuleReq::BranchDepthReq,
-                    min: 1.5,
+                    min: 2.5,
                     max: 99.0,
                     outcome: RuleOutcome::Exit
                 },
                 GenomeRule {
                     req: RuleReq::PlantBranchReq,
-                    min: 11.5,
+                    min: 40.5,
                     max: 99.0,
                     outcome: RuleOutcome::RequestModifyBranch { 
+                        priority: 5.0,
                         strength_factor: 0.5, 
                         photoreceptiveness_factor: -1.0, 
-                        water_intake_factor: 0.4, 
-                        length_factor: 0.8,
-                        priority: 2.5
+                        water_intake_factor: 0.3, 
+                        length_factor: 0.8
                     }
                 },
                 GenomeRule {
@@ -198,11 +210,11 @@ impl PlantGenome {
                     min: 0.0,
                     max: 30.0,
                     outcome: RuleOutcome::RequestModifyBranch { 
+                        priority: 4.9,
                         strength_factor: 0.2, 
                         photoreceptiveness_factor: -0.3, 
-                        water_intake_factor: 1.0, 
-                        length_factor: 0.8,
-                        priority: 2.5
+                        water_intake_factor: 0.5, 
+                        length_factor: 0.5
                     }
                 }
             ] 

@@ -1,12 +1,14 @@
 use std::fmt::{Debug, Formatter};
+use std::f32::consts::PI;
 
 use glium::DrawParameters;
+use rand::random_range;
 use crate::glium::Surface;
 
 use crate::render::camera::CameraState;
 use crate::render::mat4_def::Mat4;
 use crate::terrain::{Terrain, TERRAIN_CELL_WIDTH};
-use crate::plant::growth_priority_item::GrowthPriorityItem;
+use crate::plant::growth_priority_item::{GrowthPriorityItem, PriorityItemType};
 use crate::plant::genome::PlantGenome;
 use crate::plant::branch::{Branch, BranchConnection};
 use crate::render::Vertex;
@@ -22,6 +24,7 @@ pub struct Plant {
     pub age_ticks: u64,
 
     pub root_position: (f32, f32, f32),
+    pub root_rotation: f32,
     pub branches: Vec<Branch>,
     
     pub current_energy: f32,
@@ -46,7 +49,7 @@ impl Plant {
         let mut homeostasis: f32 = 2.0;
         let mut growth_priority_heap: BinaryHeap<GrowthPriorityItem> = BinaryHeap::new();
 
-        let matrix = Mat4::identity();
+        let matrix = Mat4::rotation_y(self.root_rotation);
 
         let mut vertices: Vec<Vertex> = vec![];
         let mut indices: Vec<u32> = vec![];
@@ -62,10 +65,15 @@ impl Plant {
                 ));
             },
             PlantModelMode::SuperLdm => {
+                // Wide lines are deprecated behavior, so SuperLdm should never be called
+                panic!("Wide lines have been deprecated, so SuperLdm is equivalently deprecated");
+
+                /*
                 self.cached_model = Some((
                     glium::VertexBuffer::new(display, &vertices).unwrap(), 
                     glium::IndexBuffer::new(display, glium::index::PrimitiveType::LinesList, &indices).unwrap()
                 ));
+                */
             }
         }
 
@@ -85,8 +93,17 @@ impl Plant {
             return false;
         }
 
-        while !growth_priority_heap.is_empty() && self.branches.len() < PLANT_MAX_BRANCH_COUNT && self.current_energy > self.genome.min_enegy_for_growth {
+        while !growth_priority_heap.is_empty() && self.current_energy > self.genome.min_enegy_for_growth {
             let growth_priority_item: GrowthPriorityItem = growth_priority_heap.pop().unwrap();
+
+            match &growth_priority_item.item {
+                PriorityItemType::NewOffshoot(..) => {
+                    if self.branches.len() >= PLANT_MAX_BRANCH_COUNT {
+                        continue;
+                    }
+                }
+                _ => ()
+            }
 
             if !self.execute_growth_priority_item(&growth_priority_item) {
                 // Executes when the growth priority item didn't execute because the plant didn't have enough energy 
@@ -149,6 +166,7 @@ impl Plant {
 
             genome: genome,
             root_position: (x, terrain.get_height(x, z), z),
+            root_rotation: random_range(-PI .. PI),
             current_energy: starting_energy,
             current_sunlight: 0.0,
             current_water: 0.0,

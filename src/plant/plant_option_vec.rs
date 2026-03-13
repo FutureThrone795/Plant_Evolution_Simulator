@@ -68,7 +68,9 @@ impl PlantOptionVec {
 
                     if dist_to_camera > 35.0 {
                         if (total_ticks / (PLANT_TICK_MOD + 1)) & 8 == i & 8 {
-                            model_mode = PlantModelMode::SuperLdm;
+                            //model_mode = PlantModelMode::SuperLdm;
+                            //Replaced with Ldm because wide lines are deprecated and SuperLdm is equivalently deprecated
+                            model_mode = PlantModelMode::Ldm;
                         } else  {
                             model_mode = PlantModelMode::NoModelUpdate;
                         }

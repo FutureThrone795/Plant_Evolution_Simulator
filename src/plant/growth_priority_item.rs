@@ -4,17 +4,16 @@ use crate::plant::branch::Branch;
 use crate::plant::Plant;
 use crate::plant::branch::BranchConnection;
 
-pub fn modify_self_property_helper(original_val: f32, change_factor: f32) -> f32 {
-    //Original val must be between 0.0 and 1.0, change factor changes this - positive go up, negative go down, kinda lmao its not a science idk go graph it yourself its weird
-    return (original_val + (change_factor / 10.0).tanh()).tanh();
-}
-
-pub fn modify_self_length_property_helper(original_len: f32, change_factor: f32) -> f32 {
-    return modify_self_property_helper(original_len * 0.6, change_factor) / 0.6;
-}
-
 pub struct NewOffshootPriorityItem {
-    pub placement_straightness: f32,
+    pub priority: f32,
+        
+    // upness, rightness, and forwardness are each in the direction of the branch itself (as opposed to any kind of "world up" or "world right")
+    // i.e. high rightness will cause a clockwise spiral from top-down
+    pub placement_upness: f32,
+    pub placement_rightness: f32,
+    pub placement_forwardness: f32,
+    pub placement_randomness: f32,
+
     pub strength: f32,
     pub photoreceptiveness: f32,
     pub water_intake: f32,
@@ -42,8 +41,8 @@ pub struct GrowthPriorityItem {
 }
 
 impl GrowthPriorityItem {
-    pub fn new_offshoot_request(branch_index: usize, placement_straightness: f32, strength: f32, photoreceptiveness: f32, water_intake: f32, length: f32, priority: f32) -> GrowthPriorityItem {
-        let cost = Branch::calculate_cost_from_individual_parts(strength, photoreceptiveness, water_intake, length);
+    pub fn new_offshoot_request(branch_index: usize, priority: f32, placement_upness: f32, placement_rightness: f32, placement_forwardness: f32, placement_randomness: f32, strength: f32, photoreceptiveness: f32, water_intake: f32, length: f32) -> GrowthPriorityItem {
+        //let cost = Branch::calculate_cost_from_individual_parts(strength, photoreceptiveness, water_intake, length);
         
         return GrowthPriorityItem { 
             priority,
@@ -52,11 +51,17 @@ impl GrowthPriorityItem {
 
             item: PriorityItemType::NewOffshoot(
                 NewOffshootPriorityItem { 
-                    placement_straightness, 
-                    strength, 
-                    photoreceptiveness, 
-                    water_intake, 
-                    length 
+                    priority,
+        
+                    placement_upness,
+                    placement_rightness,
+                    placement_forwardness,
+                    placement_randomness,
+
+                    strength,
+                    photoreceptiveness,
+                    water_intake,
+                    length
                 }
             )
         }
@@ -99,14 +104,14 @@ impl Plant {
                 self.current_energy -= cost;
             }
             PriorityItemType::ModifyBranch(item) => {
-                let new_strength = modify_self_property_helper(self.branches[growth_priority_item.branch_index].strength, item.strength_factor);
-                let new_photoreceptiveness = modify_self_property_helper(self.branches[growth_priority_item.branch_index].photoreceptiveness, item.photoreceptiveness_factor);
-                let new_water_intake = modify_self_property_helper(self.branches[growth_priority_item.branch_index].water_intake, item.water_intake_factor);
-                let new_length = modify_self_length_property_helper(self.branches[growth_priority_item.branch_index].length, item.length_factor);
+                let new_strength = self.branches[growth_priority_item.branch_index].strength + item.strength_factor;
+                let new_photoreceptiveness = item.photoreceptiveness_factor;
+                let new_water_intake = self.branches[growth_priority_item.branch_index].water_intake + item.water_intake_factor;
+                let new_length = self.branches[growth_priority_item.branch_index].length + item.length_factor;
                 
-                let prev_branch_cost = self.branches[growth_priority_item.branch_index].calculate_cost();
+                let current_branch_cost = self.branches[growth_priority_item.branch_index].calculate_cost();
                 let new_branch_cost = Branch::calculate_cost_from_individual_parts(new_strength, new_photoreceptiveness, new_water_intake, new_length);
-                let cost = new_branch_cost - prev_branch_cost;
+                let cost = new_branch_cost - current_branch_cost;
 
                 if self.current_energy - cost < self.genome.min_enegy_for_growth {
                     return false;
@@ -136,7 +141,7 @@ impl Eq for GrowthPriorityItem {}
 
 impl PartialOrd for GrowthPriorityItem {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        self.priority.partial_cmp(&other.priority).map(|o| o.reverse())
+        self.priority.partial_cmp(&other.priority)
     }
 }
 

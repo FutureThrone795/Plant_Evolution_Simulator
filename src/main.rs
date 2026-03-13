@@ -3,7 +3,6 @@
 #[macro_use]
 extern crate glium;
 use glium::Surface;
-use glium::winit::dpi::LogicalSize;
 
 use std::time::Instant;
 use std::fs;
@@ -15,6 +14,7 @@ mod plant;
 mod render;
 mod terrain;
 mod world;
+mod general_math;
 
 use crate::plant::Plant;
 use crate::render::vector_math;
@@ -61,7 +61,6 @@ fn main() {
         },
         blend: glium::Blend::alpha_blending(),
         backface_culling: glium::BackfaceCullingMode::CullCounterClockwise,
-        //line_width: Some(4.0),
         
         .. Default::default()
     };
@@ -129,13 +128,14 @@ fn main() {
                         },
                         glium::winit::keyboard::PhysicalKey::Code(glium::winit::keyboard::KeyCode::KeyK) => {
                             if event.state.is_pressed() {
-                                let new_plant = plant::Plant::new(
+                                let mut new_plant = plant::Plant::new(
                                     PlantGenome::human_made_tree_genome(), 
                                     camera.position.0 / TERRAIN_CELL_WIDTH, 
                                     camera.position.2 / TERRAIN_CELL_WIDTH, 
                                     100.0, 
                                     &world.terrain
                                 );
+                                new_plant.genome.apply_random_mutations();
                                 world.plants.add_plant(new_plant);
                             }
                         },glium::winit::keyboard::PhysicalKey::Code(glium::winit::keyboard::KeyCode::KeyR) => {

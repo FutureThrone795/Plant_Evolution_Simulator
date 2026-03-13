@@ -143,23 +143,34 @@ impl Plant {
 
                     RuleOutcome::RequestNewOffshoot { 
                         priority,
-                        placement_straightness,
+        
+                        placement_upness,
+                        placement_rightness,
+                        placement_forwardness,
+                        placement_randomness,
+
                         strength,
                         photoreceptiveness,
                         water_intake,
-                        length,
+                        length
                     } => {
                         if self.branches.len() > PLANT_MAX_BRANCH_COUNT || (self.branches[branch_index].offshoot_1.is_some() && self.branches[branch_index].offshoot_2.is_some()) {
                             continue;
                         }
                         growth_priority_heap.push(GrowthPriorityItem::new_offshoot_request(
                             branch_index, 
-                            *placement_straightness, 
+                            *priority + random_range(-1.0 .. 1.0),
+                            
+                            *placement_upness, 
+                            *placement_rightness, 
+                            *placement_forwardness, 
+                            *placement_randomness, 
+
                             *strength, 
                             *photoreceptiveness, 
                             *water_intake, 
-                            *length, 
-                            *priority + random_range(-1.0 .. 1.0)
+                            *length
+                            
                         ));
                         break;
                     }

@@ -122,7 +122,8 @@ pub struct Terrain {
 }
 
 impl Terrain {
-    pub fn get_height(&self, x: f32, z: f32) -> f32 {
+    #[inline]
+    fn get_bilinear_terrain_value(&self, x: f32, z: f32, f: fn(TerrainGridNode) -> f32) -> f32 {
         let x_mapped = (x as f32).rem_euclid(TERRAIN_GRID_ROWS as f32);
         let z_mapped = (z as f32).rem_euclid(TERRAIN_GRID_ROWS as f32);
 
@@ -134,15 +135,27 @@ impl Terrain {
         let pos_z_index = (neg_z_index + 1).rem_euclid(TERRAIN_GRID_ROWS);
         let z_offset = z_mapped.rem_euclid(1.0);
 
-        let pos_x_pos_z_height = self.grid[pos_x_index][pos_z_index].height;
-        let neg_x_pos_z_height = self.grid[neg_x_index][pos_z_index].height;
-        let pos_x_neg_z_height = self.grid[pos_x_index][neg_z_index].height;
-        let neg_x_neg_z_height = self.grid[neg_x_index][neg_z_index].height;
+        let pos_x_pos_z_val = f(self.grid[pos_x_index][pos_z_index]);
+        let neg_x_pos_z_val = f(self.grid[neg_x_index][pos_z_index]);
+        let pos_x_neg_z_val = f(self.grid[pos_x_index][neg_z_index]);
+        let neg_x_neg_z_val = f(self.grid[neg_x_index][neg_z_index]);
         
-        return  pos_x_pos_z_height*(x_offset)*(z_offset) + 
-                neg_x_pos_z_height*(1.0-x_offset)*(z_offset) +
-                pos_x_neg_z_height*(x_offset)*(1.0-z_offset) +
-                neg_x_neg_z_height*(1.0-x_offset)*(1.0-z_offset);
+        return  pos_x_pos_z_val*(x_offset)*(z_offset) + 
+                neg_x_pos_z_val*(1.0-x_offset)*(z_offset) +
+                pos_x_neg_z_val*(x_offset)*(1.0-z_offset) +
+                neg_x_neg_z_val*(1.0-x_offset)*(1.0-z_offset);
+    }   
+
+    pub fn get_height(&self, x: f32, z: f32) -> f32 {
+        return self.get_bilinear_terrain_value(x, z, |x| x.height);
+    }
+
+    pub fn get_dryness(&self, x: f32, z: f32) -> f32 {
+        return self.get_bilinear_terrain_value(x, z, |x| x.dryness);
+    }
+
+    pub fn get_rockiness(&self, x: f32, z: f32) -> f32 {
+        return self.get_bilinear_terrain_value(x, z, |x| x.rockiness);
     }
 
     pub fn empty() -> Terrain {
